@@ -57,9 +57,7 @@
     <string name="cancel">Cancel</string>
     <string name="source_device">from device</string>
     <string name="detail_estimate">Estimate (formula)</string>
-    <string name="detail_device_temp">Device reading (GATT)</string>
     <string name="warmup_hint">After putting the gauge on, readings stabilize in about 5 minutes.</string>
-    <string name="gatt_log">GATT log</string>
 
     <!-- Notifications -->
     <string name="notif_channel_status">Monitoring status</string>
