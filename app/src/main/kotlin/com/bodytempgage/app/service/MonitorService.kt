@@ -11,12 +11,14 @@ import androidx.lifecycle.lifecycleScope
 import com.bodytempgage.app.BodyTempGageApp
 import com.bodytempgage.app.R
 import com.bodytempgage.app.ble.BleEngine
+import com.bodytempgage.app.ble.GattClient
 import com.bodytempgage.app.ui.TempFormat
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 /**
@@ -44,37 +46,59 @@ class MonitorService : LifecycleService() {
 
         val manager = getSystemService(NotificationManager::class.java)
 
+        // Restore the user-requested GATT connection when monitoring starts.
         lifecycleScope.launch {
-            combine(container.readings.latest, container.settings.flow, ::Pair)
-                .collect { (reading, settings) ->
-                    if (reading == null) return@collect
+            val settings = container.settings.flow.first()
+            if (settings.gattRequested && settings.selectedMac != null &&
+                container.gattClient.state.value == GattClient.State.DISCONNECTED
+            ) {
+                container.gattClient.connect(settings.selectedMac)
+            }
+        }
 
-                    val bodyText = TempFormat.format(reading.bodyTempC, settings.useFahrenheit)
-                    val gaugeText = TempFormat.format(reading.gaugeTempC, settings.useFahrenheit)
-                    manager.notify(
-                        Notifications.STATUS_NOTIFICATION_ID,
-                        Notifications.statusNotification(
-                            this@MonitorService,
-                            getString(
-                                R.string.notif_status_text,
-                                bodyText,
-                                gaugeText,
-                                reading.batteryPercent,
-                            ),
-                        ),
-                    )
-
-                    if (settings.alertEnabled) {
-                        checkFever(manager, reading.bodyTempC, settings.alertThresholdC, settings.useFahrenheit)
-                    }
+        lifecycleScope.launch {
+            combine(
+                container.readings.latest,
+                container.readings.liveBodyTemp,
+                container.settings.flow,
+                ::Triple,
+            ).collect { (reading, live, settings) ->
+                // The gauge's own reading (GATT) wins over the advertisement estimate.
+                val liveFresh = live?.takeIf {
+                    System.currentTimeMillis() - it.timestampMillis < LIVE_FRESH_MILLIS
                 }
+                val bodyTempC = liveFresh?.tempC ?: reading?.bodyTempC ?: return@collect
+
+                val bodyText = TempFormat.format(bodyTempC, settings.useFahrenheit)
+                val text = if (reading != null) {
+                    getString(
+                        R.string.notif_status_text,
+                        bodyText,
+                        TempFormat.format(reading.gaugeTempC, settings.useFahrenheit),
+                        reading.batteryPercent,
+                    )
+                } else {
+                    getString(R.string.notif_status_body_only, bodyText)
+                }
+                manager.notify(
+                    Notifications.STATUS_NOTIFICATION_ID,
+                    Notifications.statusNotification(this@MonitorService, text),
+                )
+
+                if (settings.alertEnabled) {
+                    checkFever(manager, bodyTempC, settings.alertThresholdC, settings.useFahrenheit)
+                }
+            }
         }
 
         // Flag stale data in the notification when the gauge disappears.
         lifecycleScope.launch {
             while (true) {
                 delay(60_000)
-                val last = container.readings.latest.value?.timestampMillis ?: 0L
+                val last = maxOf(
+                    container.readings.latest.value?.timestampMillis ?: 0L,
+                    container.readings.liveBodyTemp.value?.timestampMillis ?: 0L,
+                )
                 if (System.currentTimeMillis() - last > STALE_AFTER_MILLIS) {
                     manager.notify(
                         Notifications.STATUS_NOTIFICATION_ID,
@@ -119,6 +143,7 @@ class MonitorService : LifecycleService() {
         private const val STALE_AFTER_MILLIS = 5 * 60_000L
         private const val ALERT_COOLDOWN_MILLIS = 5 * 60_000L
         private const val REARM_HYSTERESIS_C = 0.2
+        const val LIVE_FRESH_MILLIS = 60_000L
 
         private val _isRunning = MutableStateFlow(false)
         val isRunning: StateFlow<Boolean> = _isRunning.asStateFlow()

@@ -14,8 +14,15 @@ data class DiscoveredGauge(
     val lastReading: GaugeReading?,
 )
 
+/** Body temperature reported by the gauge itself over GATT (matches the official app). */
+data class LiveBodyTemp(
+    val tempC: Double,
+    val timestampMillis: Long,
+)
+
 /**
- * In-memory hub for decoded advertisements. Fed by [com.bodytempgage.app.ble.BleEngine],
+ * In-memory hub for decoded advertisements and GATT notifications. Fed by
+ * [com.bodytempgage.app.ble.BleEngine] and [com.bodytempgage.app.ble.GattClient],
  * observed by both the UI and [com.bodytempgage.app.service.MonitorService].
  */
 class ReadingRepository {
@@ -32,6 +39,17 @@ class ReadingRepository {
 
     private val _devices = MutableStateFlow<Map<String, DiscoveredGauge>>(emptyMap())
     val devices: StateFlow<Map<String, DiscoveredGauge>> = _devices.asStateFlow()
+
+    private val _liveBodyTemp = MutableStateFlow<LiveBodyTemp?>(null)
+    val liveBodyTemp: StateFlow<LiveBodyTemp?> = _liveBodyTemp.asStateFlow()
+
+    fun reportLiveBodyTemp(tempC: Double, timestampMillis: Long) {
+        _liveBodyTemp.value = LiveBodyTemp(tempC, timestampMillis)
+    }
+
+    fun clearLiveBodyTemp() {
+        _liveBodyTemp.value = null
+    }
 
     fun report(mac: String, name: String?, rssi: Int, reading: GaugeReading) {
         _devices.value = _devices.value + (
@@ -50,9 +68,10 @@ class ReadingRepository {
         }
     }
 
-    /** Drop the current reading (e.g. after switching to another device). */
+    /** Drop the current readings (e.g. after switching to another device). */
     fun resetLatest() {
         _latest.value = null
         _latestRssi.value = null
+        _liveBodyTemp.value = null
     }
 }

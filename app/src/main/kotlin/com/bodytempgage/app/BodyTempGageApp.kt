@@ -3,6 +3,7 @@ package com.bodytempgage.app
 import android.app.Application
 import android.content.Context
 import com.bodytempgage.app.ble.BleEngine
+import com.bodytempgage.app.ble.GattClient
 import com.bodytempgage.app.data.ReadingRepository
 import com.bodytempgage.app.data.SettingsRepository
 import com.bodytempgage.app.service.Notifications
@@ -15,6 +16,7 @@ class AppContainer(context: Context) {
     val settings = SettingsRepository(context)
     val readings = ReadingRepository()
     val bleEngine = BleEngine(context, readings)
+    val gattClient = GattClient(context, readings)
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 

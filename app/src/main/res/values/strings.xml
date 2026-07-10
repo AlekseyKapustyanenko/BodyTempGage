@@ -46,12 +46,28 @@
     <string name="grant">Grant permission</string>
     <string name="open_app_settings">Open app settings</string>
 
+    <!-- GATT connection -->
+    <string name="connect_title">Exact reading</string>
+    <string name="connect_desc">Connect to the gauge to see the same value as the official app. While connected here, the official app cannot connect (and vice versa).</string>
+    <string name="connect_connecting">Connecting… If it takes long, disconnect the official app first.</string>
+    <string name="connect_connected">Connected — showing the gauge\'s own body temperature.</string>
+    <string name="connect_failed">Connection failed. Is the official app holding the connection?</string>
+    <string name="connect">Connect</string>
+    <string name="disconnect">Disconnect</string>
+    <string name="cancel">Cancel</string>
+    <string name="source_device">from device</string>
+    <string name="source_estimate">estimate</string>
+    <string name="detail_estimate">Estimate (formula)</string>
+    <string name="detail_device_temp">Device reading (GATT)</string>
+    <string name="warmup_hint">After putting the gauge on, readings stabilize in about 5 minutes.</string>
+
     <!-- Notifications -->
     <string name="notif_channel_status">Monitoring status</string>
     <string name="notif_channel_alerts">Fever alerts</string>
     <string name="notif_monitoring_title">Monitoring temperature</string>
     <string name="notif_waiting">Waiting for a signal from the thermometer…</string>
     <string name="notif_status_text">Body %1$s · Gauge %2$s · Battery %3$d%%</string>
+    <string name="notif_status_body_only">Body %1$s</string>
     <string name="notif_fever_title">High temperature!</string>
     <string name="notif_fever_text">Body temperature is %1$s</string>
 </resources>

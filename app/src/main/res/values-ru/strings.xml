@@ -46,12 +46,28 @@
     <string name="grant">Дать разрешение</string>
     <string name="open_app_settings">Открыть настройки приложения</string>
 
+    <!-- GATT connection -->
+    <string name="connect_title">Точное показание</string>
+    <string name="connect_desc">Подключитесь к датчику, чтобы видеть то же значение, что и в официальном приложении. Пока подключено здесь, официальное приложение не сможет подключиться (и наоборот).</string>
+    <string name="connect_connecting">Подключение… Если долго — сначала отключите официальное приложение.</string>
+    <string name="connect_connected">Подключено — показывается температура тела, рассчитанная самим датчиком.</string>
+    <string name="connect_failed">Не удалось подключиться. Возможно, подключено официальное приложение?</string>
+    <string name="connect">Подключиться</string>
+    <string name="disconnect">Отключиться</string>
+    <string name="cancel">Отмена</string>
+    <string name="source_device">с устройства</string>
+    <string name="source_estimate">оценка</string>
+    <string name="detail_estimate">Оценка (по формуле)</string>
+    <string name="detail_device_temp">Показание устройства (GATT)</string>
+    <string name="warmup_hint">После надевания датчика показания стабилизируются примерно за 5 минут.</string>
+
     <!-- Notifications -->
     <string name="notif_channel_status">Статус мониторинга</string>
     <string name="notif_channel_alerts">Оповещения о жаре</string>
     <string name="notif_monitoring_title">Мониторинг температуры</string>
     <string name="notif_waiting">Ожидание сигнала от термометра…</string>
     <string name="notif_status_text">Тело %1$s · Датчик %2$s · Батарея %3$d%%</string>
+    <string name="notif_status_body_only">Тело %1$s</string>
     <string name="notif_fever_title">Высокая температура!</string>
     <string name="notif_fever_text">Температура тела %1$s</string>
 </resources>
