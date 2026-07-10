@@ -53,6 +53,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -367,6 +368,24 @@ fun MainScreen(
                             stringResource(R.string.device_mac),
                             settings.selectedMac ?: "—",
                         )
+
+                        val gattLog by container.gattClient.log.collectAsStateWithLifecycle()
+                        if (gattLog.isNotEmpty()) {
+                            Text(
+                                text = stringResource(R.string.gatt_log),
+                                style = MaterialTheme.typography.titleSmall,
+                                modifier = Modifier.padding(top = 8.dp),
+                            )
+                            gattLog.forEach { line ->
+                                Text(
+                                    text = line,
+                                    style = MaterialTheme.typography.bodySmall.copy(
+                                        fontFamily = FontFamily.Monospace,
+                                    ),
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
+                        }
                     }
                 }
             }
