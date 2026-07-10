@@ -1,0 +1,64 @@
+# BodyTempGage
+
+Android app for the **Xiaomi Miaomiaoce MMC-T201-2** (and MMC-T201-1) wearable body
+thermometer. It listens to the thermometer's Bluetooth LE advertisements — no pairing or
+connection needed — and shows:
+
+- **Gauge (skin sensor) temperature**, **body temperature**, or **both** — switchable on the main screen
+- **Battery level** of the gauge
+- **Background monitoring** with a configurable **fever alert** notification
+- UI in **English** and **Russian**, °C or °F
+
+## How it works
+
+The thermometer continuously broadcasts Xiaomi **MiBeacon** service data (UUID `0xFE95`).
+Each frame carries object `0x2000` with two raw thermistor readings (skin side and
+environment side) plus a battery byte. Body temperature is not transmitted by the device;
+it is estimated from both sensors (dual heat flux) with the empirical formula derived by
+the community in [ble_monitor issue #264](https://github.com/custom-components/ble_monitor/issues/264) —
+the same formula Home Assistant's ble_monitor uses:
+
+```
+body = 3.71934e-11 * exp(0.69314 * temp1) - 1.02801e-8 * exp(0.53871 * temp2) + 36.413
+```
+
+The parser and decoder live in the pure-Kotlin `:core` module and are covered by unit
+tests with a real advertisement captured in that issue.
+
+## Project structure
+
+| Module  | Contents |
+|---------|----------|
+| `:core` | Pure JVM Kotlin: MiBeacon parser, T201 decoder, models. No Android dependencies — ready for reuse in a future **Wear OS** module. |
+| `:app`  | Phone app: Jetpack Compose UI, BLE scanning, foreground monitoring service, fever alerts. |
+
+## Building
+
+Requirements: JDK 17+, Android SDK (compileSdk 35). Open in Android Studio, or:
+
+```
+./gradlew :app:assembleDebug     # APK at app/build/outputs/apk/debug/
+./gradlew :core:test             # protocol unit tests, no Android SDK needed
+```
+
+In environments without the Android SDK / access to `dl.google.com`, set `SKIP_ANDROID=1`
+to work with `:core` alone (`SKIP_ANDROID=1 ./gradlew :core:test`).
+
+## Usage
+
+1. Grant the Bluetooth permission on first launch.
+2. Pick your thermometer from the list (it must be broadcasting — insert the battery).
+3. Main screen: switch between *Gauge / Body / Both*, watch battery and signal.
+4. Toggle *Background monitoring* to keep measuring with the app closed; configure the
+   fever alert threshold in Settings.
+
+## Roadmap
+
+- **Wear OS companion app** (planned): reuse `:core` and the scanning/data layer, add a
+  Compose for Wear UI and a tile/complication.
+
+## Disclaimer
+
+This is not a medical device application. The body temperature estimate comes from a
+community-derived formula and may differ from the official app. Do not use it for
+medical decisions.

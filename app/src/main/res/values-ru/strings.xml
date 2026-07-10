@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">BodyTempGage</string>
+
+    <!-- Display modes -->
+    <string name="mode_gauge">Датчик</string>
+    <string name="mode_body">Тело</string>
+    <string name="mode_both">Оба</string>
+    <string name="label_gauge_temp">Температура датчика (кожи)</string>
+    <string name="label_body_temp">Температура тела</string>
+
+    <!-- Main screen -->
+    <string name="battery">Батарея</string>
+    <string name="searching">Поиск термометра…</string>
+    <string name="bluetooth_off">Bluetooth выключен</string>
+    <string name="scan_failed">Ошибка сканирования Bluetooth. Попробуйте выключить и включить Bluetooth.</string>
+    <string name="just_now">только что</string>
+    <string name="seconds_ago">%1$d с назад</string>
+    <string name="minutes_ago">%1$d мин назад</string>
+    <string name="details">Подробности</string>
+    <string name="raw_skin">Датчик кожи (temp1)</string>
+    <string name="raw_ambient">Внешний датчик (temp2)</string>
+    <string name="device_mac">MAC-адрес</string>
+    <string name="monitoring">Фоновый мониторинг</string>
+    <string name="monitoring_desc">Продолжать измерения и предупреждать о жаре, когда приложение закрыто</string>
+
+    <!-- Device picker -->
+    <string name="select_device_title">Выберите термометр</string>
+    <string name="scanning_hint">Поиск термометров MMC-T201 поблизости…</string>
+    <string name="picker_empty">Пока ничего не найдено. Убедитесь, что термометр рядом и его батарея не разряжена.</string>
+
+    <!-- Settings -->
+    <string name="settings">Настройки</string>
+    <string name="back">Назад</string>
+    <string name="unit_fahrenheit">Показывать температуру в Фаренгейтах (°F)</string>
+    <string name="fever_alert">Оповещение о жаре</string>
+    <string name="fever_alert_desc">Уведомлять, когда температура тела достигает порога</string>
+    <string name="alert_threshold">Порог оповещения</string>
+    <string name="change_device">Сменить устройство</string>
+    <string name="about_title">О приложении</string>
+    <string name="about_text">Считывает показания термометров Xiaomi Miaomiaoce MMC-T201 через Bluetooth LE без сопряжения. Температура тела рассчитывается по двум встроенным датчикам по формуле сообщества из ble_monitor для Home Assistant (issue #264).</string>
+
+    <!-- Permissions -->
+    <string name="permissions_title">Нужно разрешение Bluetooth</string>
+    <string name="permissions_text">Приложение ищет термометр через Bluetooth LE. Термометр определяется по его сигналу; данные о местоположении не собираются.</string>
+    <string name="grant">Дать разрешение</string>
+    <string name="open_app_settings">Открыть настройки приложения</string>
+
+    <!-- Notifications -->
+    <string name="notif_channel_status">Статус мониторинга</string>
+    <string name="notif_channel_alerts">Оповещения о жаре</string>
+    <string name="notif_monitoring_title">Мониторинг температуры</string>
+    <string name="notif_waiting">Ожидание сигнала от термометра…</string>
+    <string name="notif_status_text">Тело %1$s · Датчик %2$s · Батарея %3$d%%</string>
+    <string name="notif_fever_title">Высокая температура!</string>
+    <string name="notif_fever_text">Температура тела %1$s</string>
+</resources>
