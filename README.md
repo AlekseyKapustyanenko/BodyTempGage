@@ -22,8 +22,19 @@ the same formula Home Assistant's ble_monitor uses:
 body = 3.71934e-11 * exp(0.69314 * temp1) - 1.02801e-8 * exp(0.53871 * temp2) + 36.413
 ```
 
-The parser and decoder live in the pure-Kotlin `:core` module and are covered by unit
-tests with a real advertisement captured in that issue.
+The gauge never transmits a computed body temperature: the official app calculates it
+on the phone from this same sensor pair. Besides advertisements, the app can optionally
+**connect** (a button on the main screen) to the Health Thermometer service (`0x1809`).
+The MMC-T201-2's Intermediate Temperature characteristic (`0x2A1E`) does not follow the
+Bluetooth spec — instead of an IEEE-11073 float it streams
+`status (1) | int16 temp1 | int16 temp2 | uint8 battery` every ~2 seconds (captured from
+real hardware, e.g. `00 840d 5c0d 61` = 34.60 °C / 34.20 °C / 97 %). While connected the
+readings update every ~2 s instead of the advertisement cadence. Only one central can
+connect at a time — the official app and this one can't be connected simultaneously.
+
+The parsers and decoders live in the pure-Kotlin `:core` module and are covered by unit
+tests with real captures (advertisement from issue #264, GATT notification from an
+MMC-T201-2).
 
 ## Project structure
 

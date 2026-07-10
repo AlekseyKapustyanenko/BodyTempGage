@@ -19,6 +19,8 @@ data class AppSettings(
     val useFahrenheit: Boolean = false,
     val alertEnabled: Boolean = true,
     val alertThresholdC: Double = 37.5,
+    /** User asked for a GATT connection to the gauge (exact device-computed reading). */
+    val gattRequested: Boolean = false,
 )
 
 class SettingsRepository(private val context: Context) {
@@ -30,6 +32,7 @@ class SettingsRepository(private val context: Context) {
         val useFahrenheit = booleanPreferencesKey("use_fahrenheit")
         val alertEnabled = booleanPreferencesKey("alert_enabled")
         val alertThresholdC = doublePreferencesKey("alert_threshold_c")
+        val gattRequested = booleanPreferencesKey("gatt_requested")
     }
 
     val flow: Flow<AppSettings> = context.dataStore.data.map { p ->
@@ -42,6 +45,7 @@ class SettingsRepository(private val context: Context) {
             useFahrenheit = p[Keys.useFahrenheit] ?: false,
             alertEnabled = p[Keys.alertEnabled] ?: true,
             alertThresholdC = p[Keys.alertThresholdC] ?: 37.5,
+            gattRequested = p[Keys.gattRequested] ?: false,
         )
     }
 
@@ -73,5 +77,9 @@ class SettingsRepository(private val context: Context) {
 
     suspend fun setAlertThresholdC(value: Double) {
         context.dataStore.edit { it[Keys.alertThresholdC] = value }
+    }
+
+    suspend fun setGattRequested(value: Boolean) {
+        context.dataStore.edit { it[Keys.gattRequested] = value }
     }
 }

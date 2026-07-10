@@ -8,7 +8,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.BluetoothSearching
+import androidx.compose.material.icons.automirrored.filled.BluetoothSearching
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -98,7 +98,7 @@ fun DevicePickerScreen(
                         Card(onClick = { onSelected(device.mac, device.name) }) {
                             ListItem(
                                 leadingContent = {
-                                    Icon(Icons.Filled.BluetoothSearching, contentDescription = null)
+                                    Icon(Icons.AutoMirrored.Filled.BluetoothSearching, contentDescription = null)
                                 },
                                 headlineContent = {
                                     Text(device.name ?: T201Decoder.DEVICE_NAME_PREFIX)
