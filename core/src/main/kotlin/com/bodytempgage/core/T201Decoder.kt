@@ -23,12 +23,28 @@ object T201Decoder {
     /** Returns null when the frame carries no valid 0x2000 object. */
     fun decode(frame: MiBeaconFrame, timestampMillis: Long): GaugeReading? {
         val obj = frame.objects.firstOrNull { it.id == OBJECT_BODY_TEMPERATURE } ?: return null
-        val p = obj.payload
-        if (p.size < 5) return null
+        return decodeRaw(obj.payload, 0, timestampMillis)
+    }
 
-        val temp1 = readInt16Le(p, 0) / 100.0
-        val temp2 = readInt16Le(p, 2) / 100.0
-        val battery = p[4].toInt() and 0xFF
+    /**
+     * Decodes the MMC-T201-2's GATT notification payload (Intermediate Temperature, 0x2A1E).
+     *
+     * The firmware does not follow the Health Thermometer spec: instead of an IEEE-11073
+     * float it streams `status (1) | int16 temp1 | int16 temp2 | uint8 battery` about every
+     * 2 seconds — the same raw sensors as the advertisement, just faster. Observed on real
+     * hardware, e.g. `00 840d 5c0d 61` = 34.60 °C / 34.20 °C / 97 %.
+     */
+    fun decodeGattPayload(payload: ByteArray, timestampMillis: Long): GaugeReading? {
+        if (payload.size < 6) return null
+        return decodeRaw(payload, 1, timestampMillis)
+    }
+
+    private fun decodeRaw(p: ByteArray, offset: Int, timestampMillis: Long): GaugeReading? {
+        if (p.size < offset + 5) return null
+
+        val temp1 = readInt16Le(p, offset) / 100.0
+        val temp2 = readInt16Le(p, offset + 2) / 100.0
+        val battery = p[offset + 4].toInt() and 0xFF
 
         if (temp1 !in -40.0..85.0 || temp2 !in -40.0..85.0 || battery > 100) return null
 

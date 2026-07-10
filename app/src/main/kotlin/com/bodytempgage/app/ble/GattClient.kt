@@ -12,6 +12,7 @@ import android.content.Context
 import android.os.Build
 import com.bodytempgage.app.data.ReadingRepository
 import com.bodytempgage.core.HealthThermometer
+import com.bodytempgage.core.T201Decoder
 import java.text.SimpleDateFormat
 import java.util.ArrayDeque
 import java.util.Date
@@ -289,18 +290,29 @@ class GattClient(
     }
 
     private fun handleNotification(uuid: UUID, value: ByteArray) {
-        val parsed = if (uuid == INTERMEDIATE_TEMPERATURE || uuid == TEMPERATURE_MEASUREMENT) {
-            HealthThermometer.parseTemperatureMeasurement(value)
-        } else {
-            null
+        if (uuid == INTERMEDIATE_TEMPERATURE || uuid == TEMPERATURE_MEASUREMENT) {
+            // MMC-T201-2 firmware: non-standard payload with the two raw sensors + battery,
+            // streamed every ~2 s. Same data as the advertisement, just faster.
+            val raw = T201Decoder.decodeGattPayload(value, System.currentTimeMillis())
+            if (raw != null) {
+                _state.value = State.CONNECTED
+                readings.reportSelected(raw)
+                logEvent(
+                    "notif ${shortUuid(uuid)}: ${hex(value)} → t1=%.2f t2=%.2f bat=%d%%"
+                        .format(Locale.US, raw.gaugeTempC, raw.ambientTempC, raw.batteryPercent),
+                )
+                return
+            }
+            // Spec-compliant firmware would send an IEEE-11073 float (a computed body temp).
+            val bodyC = HealthThermometer.parseTemperatureMeasurement(value)
+            if (bodyC != null) {
+                _state.value = State.CONNECTED
+                readings.reportLiveBodyTemp(bodyC, System.currentTimeMillis())
+                logEvent("notif ${shortUuid(uuid)}: ${hex(value)} → %.2f°C".format(Locale.US, bodyC))
+                return
+            }
         }
-        if (parsed != null) {
-            _state.value = State.CONNECTED
-            readings.reportLiveBodyTemp(parsed, System.currentTimeMillis())
-            logEvent("notif ${shortUuid(uuid)}: ${hex(value)} → %.2f°C".format(Locale.US, parsed))
-        } else {
-            logEvent("notif ${shortUuid(uuid)}: ${hex(value)}")
-        }
+        logEvent("notif ${shortUuid(uuid)}: ${hex(value)}")
     }
 
     private fun logEvent(message: String) {

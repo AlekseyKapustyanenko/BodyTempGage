@@ -48,15 +48,14 @@
 
     <!-- GATT connection -->
     <string name="connect_title">Точное показание</string>
-    <string name="connect_desc">Подключитесь к датчику, чтобы видеть то же значение, что и в официальном приложении. Пока подключено здесь, официальное приложение не сможет подключиться (и наоборот).</string>
+    <string name="connect_desc">Подключитесь к датчику, чтобы получать показания каждые ~2 секунды — тот же поток данных, что использует официальное приложение. Пока подключено здесь, официальное приложение не сможет подключиться (и наоборот).</string>
     <string name="connect_connecting">Подключение… Если долго — сначала отключите официальное приложение.</string>
-    <string name="connect_connected">Подключено — показывается температура тела, рассчитанная самим датчиком.</string>
+    <string name="connect_connected">Подключено — показания обновляются каждые ~2 секунды.</string>
     <string name="connect_failed">Не удалось подключиться. Возможно, подключено официальное приложение?</string>
     <string name="connect">Подключиться</string>
     <string name="disconnect">Отключиться</string>
     <string name="cancel">Отмена</string>
     <string name="source_device">с устройства</string>
-    <string name="source_estimate">оценка</string>
     <string name="detail_estimate">Оценка (по формуле)</string>
     <string name="detail_device_temp">Показание устройства (GATT)</string>
     <string name="warmup_hint">После надевания датчика показания стабилизируются примерно за 5 минут.</string>

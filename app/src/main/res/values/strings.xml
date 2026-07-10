@@ -48,15 +48,14 @@
 
     <!-- GATT connection -->
     <string name="connect_title">Exact reading</string>
-    <string name="connect_desc">Connect to the gauge to see the same value as the official app. While connected here, the official app cannot connect (and vice versa).</string>
+    <string name="connect_desc">Connect to the gauge for live readings every ~2 seconds — the same data stream the official app uses. While connected here, the official app cannot connect (and vice versa).</string>
     <string name="connect_connecting">Connecting… If it takes long, disconnect the official app first.</string>
-    <string name="connect_connected">Connected — showing the gauge\'s own body temperature.</string>
+    <string name="connect_connected">Connected — live readings every ~2 seconds.</string>
     <string name="connect_failed">Connection failed. Is the official app holding the connection?</string>
     <string name="connect">Connect</string>
     <string name="disconnect">Disconnect</string>
     <string name="cancel">Cancel</string>
     <string name="source_device">from device</string>
-    <string name="source_estimate">estimate</string>
     <string name="detail_estimate">Estimate (formula)</string>
     <string name="detail_device_temp">Device reading (GATT)</string>
     <string name="warmup_hint">After putting the gauge on, readings stabilize in about 5 minutes.</string>

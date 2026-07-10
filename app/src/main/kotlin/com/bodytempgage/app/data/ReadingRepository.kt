@@ -47,6 +47,11 @@ class ReadingRepository {
         _liveBodyTemp.value = LiveBodyTemp(tempC, timestampMillis)
     }
 
+    /** A reading received over GATT — always from the selected (connected) device. */
+    fun reportSelected(reading: GaugeReading) {
+        _latest.value = reading
+    }
+
     fun clearLiveBodyTemp() {
         _liveBodyTemp.value = null
     }

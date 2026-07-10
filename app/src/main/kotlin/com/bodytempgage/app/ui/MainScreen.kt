@@ -167,9 +167,11 @@ fun MainScreen(
                         val bodyColor =
                             if (fever) MaterialTheme.colorScheme.error
                             else MaterialTheme.colorScheme.onSurface
-                        val bodySource = stringResource(
-                            if (live != null) R.string.source_device else R.string.source_estimate,
-                        )
+                        val bodySuffix = if (live != null) {
+                            " · " + stringResource(R.string.source_device)
+                        } else {
+                            ""
+                        }
 
                         when (settings.displayMode) {
                             DisplayMode.GAUGE -> {
@@ -187,7 +189,7 @@ fun MainScreen(
                                     value = bodyTempC?.let {
                                         TempFormat.format(it, settings.useFahrenheit)
                                     } ?: "—",
-                                    label = stringResource(R.string.label_body_temp) + " · " + bodySource,
+                                    label = stringResource(R.string.label_body_temp) + bodySuffix,
                                     big = true,
                                     valueColor = bodyColor,
                                 )
@@ -198,7 +200,7 @@ fun MainScreen(
                                     value = bodyTempC?.let {
                                         TempFormat.format(it, settings.useFahrenheit)
                                     } ?: "—",
-                                    label = stringResource(R.string.label_body_temp) + " · " + bodySource,
+                                    label = stringResource(R.string.label_body_temp) + bodySuffix,
                                     big = false,
                                     valueColor = bodyColor,
                                 )
