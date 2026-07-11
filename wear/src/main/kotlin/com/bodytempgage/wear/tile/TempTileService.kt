@@ -84,43 +84,32 @@ class TempTileService : TileService() {
         val column = LayoutElementBuilders.Column.Builder()
             .setHorizontalAlignment(LayoutElementBuilders.HORIZONTAL_ALIGN_CENTER)
 
-        val bodyC = reading?.bodyTempC
-        when {
-            reading == null -> column
+        if (reading == null) {
+            column
                 .addContent(text("—", Typography.TYPOGRAPHY_DISPLAY1, COLOR_DEFAULT))
                 .addContent(spacer())
                 .addContent(text(getString(R.string.tile_no_data), Typography.TYPOGRAPHY_CAPTION1, COLOR_DIM))
-
-            bodyC != null -> column
+        } else {
+            // Body temperature is the headline ("—" while the gauge is off the body);
+            // the skin sensor reading sits below it, smaller.
+            val bodyC = reading.bodyTempC
+            column
                 .addContent(
                     text(
-                        TempFormat.format(bodyC, settings.useFahrenheit),
+                        bodyC?.let { TempFormat.format(it, settings.useFahrenheit) } ?: "—",
                         Typography.TYPOGRAPHY_DISPLAY1,
-                        bodyColor(bodyC, settings),
+                        bodyC?.let { bodyColor(it, settings) } ?: COLOR_DEFAULT,
                     ),
                 )
                 .addContent(spacer())
-                .addContent(text(getString(R.string.label_body_temp), Typography.TYPOGRAPHY_CAPTION1, COLOR_DIM))
-                .addContent(spacer())
                 .addContent(
                     text(
-                        getString(R.string.battery, reading.batteryPercent),
-                        Typography.TYPOGRAPHY_CAPTION2,
+                        getString(R.string.label_gauge_temp) + " " +
+                            TempFormat.format(reading.gaugeTempC, settings.useFahrenheit),
+                        Typography.TYPOGRAPHY_TITLE3,
                         COLOR_DIM,
                     ),
                 )
-
-            // Gauge visible but off the body: show the skin sensor instead.
-            else -> column
-                .addContent(
-                    text(
-                        TempFormat.format(reading.gaugeTempC, settings.useFahrenheit),
-                        Typography.TYPOGRAPHY_DISPLAY1,
-                        COLOR_DEFAULT,
-                    ),
-                )
-                .addContent(spacer())
-                .addContent(text(getString(R.string.label_gauge_temp), Typography.TYPOGRAPHY_CAPTION1, COLOR_DIM))
                 .addContent(spacer())
                 .addContent(
                     text(
