@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -21,6 +22,7 @@ import androidx.wear.compose.material.Text
 import androidx.wear.compose.material.TimeText
 import com.bodytempgage.wear.R
 import com.bodytempgage.wear.WearContainer
+import kotlinx.coroutines.flow.sample
 import kotlinx.coroutines.launch
 import androidx.compose.runtime.rememberCoroutineScope
 
@@ -29,7 +31,10 @@ fun DevicePickerScreen(
     container: WearContainer,
     onSelected: () -> Unit,
 ) {
-    val devices by container.readings.devices.collectAsStateWithLifecycle()
+    // The discovered-devices map is rebuilt on every advertisement; refreshing the list once a
+    // second is plenty and keeps scrolling smooth.
+    val devices by remember(container) { container.readings.devices.sample(1_000) }
+        .collectAsStateWithLifecycle(initialValue = container.readings.devices.value)
     val scope = rememberCoroutineScope()
     val listState = rememberScalingLazyListState()
     val list = devices.values.sortedByDescending { it.rssi }

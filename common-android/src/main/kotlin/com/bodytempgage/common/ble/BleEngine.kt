@@ -29,6 +29,12 @@ import kotlinx.coroutines.flow.asStateFlow
 class BleEngine(
     private val context: Context,
     private val readings: ReadingRepository,
+    /**
+     * Scan mode while the UI is visible. Scan callbacks are delivered on the main looper, so
+     * low-power devices (watches) pass [ScanSettings.SCAN_MODE_BALANCED] to keep the callback
+     * rate from starving the UI thread.
+     */
+    private val uiScanMode: Int = ScanSettings.SCAN_MODE_LOW_LATENCY,
 ) {
     enum class Client { UI, SERVICE }
 
@@ -104,10 +110,7 @@ class BleEngine(
                 .build(),
         )
         val settings = ScanSettings.Builder()
-            .setScanMode(
-                if (withUi) ScanSettings.SCAN_MODE_LOW_LATENCY
-                else ScanSettings.SCAN_MODE_BALANCED,
-            )
+            .setScanMode(if (withUi) uiScanMode else ScanSettings.SCAN_MODE_BALANCED)
             .build()
 
         scanner.startScan(filters, settings, callback)

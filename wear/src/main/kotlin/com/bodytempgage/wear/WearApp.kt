@@ -1,6 +1,7 @@
 package com.bodytempgage.wear
 
 import android.app.Application
+import android.bluetooth.le.ScanSettings
 import android.content.Context
 import com.bodytempgage.common.ble.BleEngine
 import com.bodytempgage.common.data.ReadingRepository
@@ -21,7 +22,10 @@ import kotlinx.coroutines.launch
 class WearContainer(context: Context) {
     val settings = SettingsRepository(context)
     val readings = ReadingRepository()
-    val bleEngine = BleEngine(context, readings)
+
+    // BALANCED even while the UI is open: scan callbacks arrive on the main looper, and
+    // LOW_LATENCY floods the watch's UI thread enough to make scrolling stutter.
+    val bleEngine = BleEngine(context, readings, uiScanMode = ScanSettings.SCAN_MODE_BALANCED)
 
     /** Mirrors settings changes to/from the paired phone over the Data Layer. */
     val settingsSync = SettingsSync(context, settings)

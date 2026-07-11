@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -28,9 +29,14 @@ import com.bodytempgage.common.data.AppSettings
 import com.bodytempgage.core.DisplayMode
 import com.bodytempgage.wear.R
 import com.bodytempgage.wear.WearContainer
+import kotlinx.coroutines.flow.distinctUntilChangedBy
+import kotlinx.coroutines.flow.sample
 
 /** Amber used for the temperature warning band (matches the phone app's intent). */
 private val WarningColor = Color(0xFFFFB300)
+
+/** Minimum spacing between UI refreshes from the reading flow. */
+private const val UI_SAMPLE_MILLIS = 1_000L
 
 @Composable
 fun MainScreen(
@@ -38,7 +44,17 @@ fun MainScreen(
     settings: AppSettings,
     onOpenSettings: () -> Unit,
 ) {
-    val reading by container.readings.latest.collectAsStateWithLifecycle()
+    // Advertisements repeat the same measurement several times a second and every reading
+    // carries a fresh timestamp, so collecting the raw flow recomposes the list on every scan
+    // callback — visible as scroll stutter on the watch. Only recompose when the displayed
+    // values change, at most once a second.
+    val reading by remember(container) {
+        container.readings.latest
+            .sample(UI_SAMPLE_MILLIS)
+            .distinctUntilChangedBy { r ->
+                r?.let { Triple(it.gaugeTempC, it.bodyTempC, it.batteryPercent) }
+            }
+    }.collectAsStateWithLifecycle(initialValue = container.readings.latest.value)
     val scanState by container.bleEngine.state.collectAsStateWithLifecycle()
     val listState = rememberScalingLazyListState()
 
