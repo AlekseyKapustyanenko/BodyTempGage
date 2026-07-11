@@ -10,6 +10,7 @@ import com.google.android.gms.wearable.Wearable
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
@@ -38,13 +39,21 @@ class SettingsSync(
 
     fun start() {
         scope.launch {
-            settings.flow.collect { current ->
+            // Debounce so a burst of local edits (e.g. tapping a threshold stepper repeatedly)
+            // publishes one urgent Data Layer item with the final value instead of one per tap —
+            // the watch's Bluetooth radio is shared with the BLE thermometer scan.
+            settings.flow.debounce(PUBLISH_DEBOUNCE_MILLIS).collect { current ->
                 val snapshot = current.toSnapshot(System.currentTimeMillis())
                 if (SettingsSyncPolicy.shouldPublish(snapshot, lastSynced)) {
                     publish(snapshot)
                 }
             }
         }
+    }
+
+    private companion object {
+        /** Coalesces rapid consecutive edits into a single Data Layer publish. */
+        const val PUBLISH_DEBOUNCE_MILLIS = 500L
     }
 
     private fun publish(snapshot: SettingsSnapshot) {
