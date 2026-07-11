@@ -48,10 +48,10 @@
     <!-- Tile -->
     <string name="tile_label">Temperature</string>
     <string name="tile_no_data">No recent data</string>
-    <string name="tile_start">Start</string>
-    <string name="tile_stop">Stop</string>
-    <string name="tile_alerts_on">Alerts on</string>
-    <string name="tile_alerts_off">Alerts off</string>
+    <string name="tile_monitor">Monitor</string>
+    <string name="tile_alerts_label">Alerts</string>
+    <string name="tile_on">On</string>
+    <string name="tile_off">Off</string>
 
     <!-- Watch-face complication -->
     <string name="complication_label">Body temperature</string>

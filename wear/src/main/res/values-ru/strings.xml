@@ -48,10 +48,10 @@
     <!-- Tile -->
     <string name="tile_label">Температура</string>
     <string name="tile_no_data">Нет свежих данных</string>
-    <string name="tile_start">Старт</string>
-    <string name="tile_stop">Стоп</string>
-    <string name="tile_alerts_on">Опов. вкл.</string>
-    <string name="tile_alerts_off">Опов. выкл.</string>
+    <string name="tile_monitor">Монитор</string>
+    <string name="tile_alerts_label">Сигналы</string>
+    <string name="tile_on">Вкл</string>
+    <string name="tile_off">Выкл</string>
 
     <!-- Watch-face complication -->
     <string name="complication_label">Температура тела</string>

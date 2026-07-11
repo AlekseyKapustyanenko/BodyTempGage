@@ -9,6 +9,7 @@ import androidx.wear.protolayout.LayoutElementBuilders
 import androidx.wear.protolayout.ModifiersBuilders
 import androidx.wear.protolayout.ResourceBuilders
 import androidx.wear.protolayout.TimelineBuilders
+import androidx.wear.protolayout.material.ChipColors
 import androidx.wear.protolayout.material.CompactChip
 import androidx.wear.protolayout.material.Text
 import androidx.wear.protolayout.material.Typography
@@ -156,13 +157,36 @@ class TempTileService : TileService() {
                 )
         }
 
-        // Start/Stop button: pauses or resumes the background scan straight from the tile.
-        // Alerts button: enables/disables temperature-threshold notifications from the tile.
+        // Two labeled on/off toggles: "Monitor" pauses/resumes the background scan, "Alerts"
+        // enables/disables temperature-threshold notifications — both straight from the tile.
         column
             .addContent(spacer())
-            .addContent(monitorToggle(settings.monitoringEnabled, deviceParameters))
-            .addContent(spacer())
-            .addContent(alertToggle(settings.alertEnabled, deviceParameters))
+            .addContent(
+                LayoutElementBuilders.Row.Builder()
+                    .setVerticalAlignment(LayoutElementBuilders.VERTICAL_ALIGN_CENTER)
+                    .addContent(
+                        labeledToggle(
+                            getString(R.string.tile_monitor),
+                            settings.monitoringEnabled,
+                            CLICK_TOGGLE_MONITOR,
+                            deviceParameters,
+                        ),
+                    )
+                    .addContent(
+                        LayoutElementBuilders.Spacer.Builder()
+                            .setWidth(DimensionBuilders.dp(8f))
+                            .build(),
+                    )
+                    .addContent(
+                        labeledToggle(
+                            getString(R.string.tile_alerts_label),
+                            settings.alertEnabled,
+                            CLICK_TOGGLE_ALERT,
+                            deviceParameters,
+                        ),
+                    )
+                    .build(),
+            )
 
         return LayoutElementBuilders.Box.Builder()
             .setWidth(DimensionBuilders.expand())
@@ -203,35 +227,43 @@ class TempTileService : TileService() {
             .setHeight(DimensionBuilders.dp(4f))
             .build()
 
-    /** Compact "Start"/"Stop" chip whose tap toggles [CLICK_TOGGLE_MONITOR] via a reload. */
-    private fun monitorToggle(
-        monitoringEnabled: Boolean,
+    /**
+     * A caption ("Monitor"/"Alerts") stacked above a compact On/Off chip. The chip is green while
+     * enabled and dim while off so its state reads at a glance; tapping toggles [clickId] via a
+     * reload, which re-issues the tile request and re-renders the flipped state.
+     */
+    private fun labeledToggle(
+        label: String,
+        enabled: Boolean,
+        clickId: String,
         deviceParameters: DeviceParametersBuilders.DeviceParameters,
     ): LayoutElementBuilders.LayoutElement =
-        CompactChip.Builder(
-            this,
-            getString(if (monitoringEnabled) R.string.tile_stop else R.string.tile_start),
-            ModifiersBuilders.Clickable.Builder()
-                .setId(CLICK_TOGGLE_MONITOR)
-                .setOnClick(ActionBuilders.LoadAction.Builder().build())
-                .build(),
-            deviceParameters,
-        ).build()
-
-    /** Compact alerts on/off chip whose tap toggles [CLICK_TOGGLE_ALERT] via a reload. */
-    private fun alertToggle(
-        alertEnabled: Boolean,
-        deviceParameters: DeviceParametersBuilders.DeviceParameters,
-    ): LayoutElementBuilders.LayoutElement =
-        CompactChip.Builder(
-            this,
-            getString(if (alertEnabled) R.string.tile_alerts_off else R.string.tile_alerts_on),
-            ModifiersBuilders.Clickable.Builder()
-                .setId(CLICK_TOGGLE_ALERT)
-                .setOnClick(ActionBuilders.LoadAction.Builder().build())
-                .build(),
-            deviceParameters,
-        ).build()
+        LayoutElementBuilders.Column.Builder()
+            .setHorizontalAlignment(LayoutElementBuilders.HORIZONTAL_ALIGN_CENTER)
+            .addContent(text(label, Typography.TYPOGRAPHY_CAPTION2, COLOR_DIM))
+            .addContent(
+                LayoutElementBuilders.Spacer.Builder()
+                    .setHeight(DimensionBuilders.dp(2f))
+                    .build(),
+            )
+            .addContent(
+                CompactChip.Builder(
+                    this,
+                    getString(if (enabled) R.string.tile_on else R.string.tile_off),
+                    ModifiersBuilders.Clickable.Builder()
+                        .setId(clickId)
+                        .setOnClick(ActionBuilders.LoadAction.Builder().build())
+                        .build(),
+                    deviceParameters,
+                ).setChipColors(
+                    if (enabled) {
+                        ChipColors(COLOR_TOGGLE_ON_BG, COLOR_DEFAULT)
+                    } else {
+                        ChipColors(COLOR_TOGGLE_OFF_BG, COLOR_DIM)
+                    },
+                ).build(),
+            )
+            .build()
 
     /** Mirrors the main screen: error colour in the alert bands, amber in the warning bands. */
     private fun bodyColor(bodyC: Double, settings: AppSettings): Int = when {
@@ -257,5 +289,10 @@ class TempTileService : TileService() {
         private const val COLOR_DIM = 0xB3FFFFFF.toInt()
         private const val COLOR_ALERT = 0xFFFF5252.toInt()
         private const val COLOR_WARNING = 0xFFFFB300.toInt()
+
+        /** Toggle-chip backgrounds: green when the control is on, translucent grey when off. */
+        private const val COLOR_TOGGLE_ON_BG = 0xFF2E7D32.toInt()
+        private const val COLOR_TOGGLE_OFF_BG = 0x33FFFFFF
+
     }
 }
