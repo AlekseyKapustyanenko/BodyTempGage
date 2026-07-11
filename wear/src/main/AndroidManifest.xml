@@ -54,5 +54,20 @@
             android:name=".service.MonitorService"
             android:exported="false"
             android:foregroundServiceType="connectedDevice" />
+
+        <!-- "Temperature" tile: current body/gauge reading at a glance. -->
+        <service
+            android:name=".tile.TempTileService"
+            android:exported="true"
+            android:icon="@drawable/ic_stat_thermometer"
+            android:label="@string/tile_label"
+            android:permission="com.google.android.wearable.permission.BIND_TILE_PROVIDER">
+            <intent-filter>
+                <action android:name="androidx.wear.tiles.action.BIND_TILE_PROVIDER" />
+            </intent-filter>
+            <meta-data
+                android:name="androidx.wear.tiles.PREVIEW"
+                android:resource="@drawable/ic_launcher_foreground" />
+        </service>
     </application>
 </manifest>

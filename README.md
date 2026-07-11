@@ -56,6 +56,10 @@ other follows (last-write-wins). The Wear app installs and runs standalone (decl
 (`com.bodytempgage`) and signing key, which the Data Layer requires for pairing. Build it with
 `./gradlew :wear:assembleDebug` (APK at `wear/build/outputs/apk/debug/`).
 
+It also provides a **"Temperature" tile** (long-press the watch face → add tile) showing the
+current body temperature — coloured by the warning/alert bands — or the gauge temperature while
+the sensor is off the body, plus battery. Tapping the tile opens the app.
+
 ## Building
 
 Requirements: JDK 17+, Android SDK (compileSdk 35). Open in Android Studio, or:
@@ -78,7 +82,7 @@ to work with `:core` alone (`SKIP_ANDROID=1 ./gradlew :core:test`).
 
 ## Roadmap
 
-- Wear OS **tile / complication** for at-a-glance body temperature.
+- Wear OS watch-face **complication** for the body temperature.
 
 ## Disclaimer
 
