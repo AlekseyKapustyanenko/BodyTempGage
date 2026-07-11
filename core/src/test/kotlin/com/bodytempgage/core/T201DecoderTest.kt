@@ -30,9 +30,27 @@ class T201DecoderTest {
         assertEquals(42L, reading.timestampMillis)
         // expected body temperature from the ble_monitor formula
         assertTrue(
-            abs(reading.bodyTempC - 36.888) < 0.02,
+            abs(reading.bodyTempC!! - 36.888) < 0.02,
             "body temp was ${reading.bodyTempC}",
         )
+    }
+
+    @Test
+    fun `no body estimate while the gauge is off the body`() {
+        // temp1 = 26.22 °C (room temperature — gauge not worn), temp2 = 26.00 °C
+        // 2622 = 0x0A3E, 2600 = 0x0A28, little-endian
+        val payload = MiBeaconParserTest.hex("3e0a280a51")
+        val reading = T201Decoder.decode(frameWithPayload(payload), 0L)!!
+
+        assertEquals(26.22, reading.gaugeTempC, 1e-9)
+        assertNull(reading.bodyTempC)
+    }
+
+    @Test
+    fun `body estimate reappears at the domain boundary`() {
+        // temp1 = 32.00 °C = 0x0C80, temp2 = 31.50 °C = 0x0C4E
+        val reading = T201Decoder.decode(frameWithPayload(MiBeaconParserTest.hex("800c4e0c51")), 0L)!!
+        assertNotNull(reading.bodyTempC)
     }
 
     @Test

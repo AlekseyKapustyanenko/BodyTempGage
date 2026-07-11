@@ -61,6 +61,7 @@
     <string name="source_device">from device</string>
     <string name="detail_estimate">Estimate (formula)</string>
     <string name="warmup_hint">After putting the gauge on, readings stabilize in about 5 minutes.</string>
+    <string name="not_worn_hint">Gauge is off the body — body temperature appears once it warms up on the skin.</string>
 
     <!-- Notifications -->
     <string name="notif_channel_status">Monitoring status</string>
@@ -70,6 +71,7 @@
     <string name="notif_waiting">Waiting for a signal from the thermometer…</string>
     <string name="notif_status_text">Body %1$s · Gauge %2$s · Battery %3$d%%</string>
     <string name="notif_status_body_only">Body %1$s</string>
+    <string name="notif_status_gauge_only">Gauge %1$s · Battery %2$d%% · not worn</string>
     <string name="notif_fever_title">High temperature!</string>
     <string name="notif_low_title">Low temperature!</string>
     <string name="notif_warn_high_title">Elevated temperature</string>

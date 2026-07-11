@@ -231,6 +231,15 @@ fun MainScreen(
                             ),
                             now = now,
                         )
+
+                        if (r != null && bodyTempC == null && settings.displayMode != DisplayMode.GAUGE) {
+                            Text(
+                                text = stringResource(R.string.not_worn_hint),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                textAlign = TextAlign.Center,
+                            )
+                        }
                     }
                 }
             }
@@ -391,7 +400,7 @@ fun MainScreen(
                         )
                         DetailRow(
                             stringResource(R.string.detail_estimate),
-                            reading?.let { TempFormat.format(it.bodyTempC, settings.useFahrenheit) } ?: "—",
+                            reading?.bodyTempC?.let { TempFormat.format(it, settings.useFahrenheit) } ?: "—",
                         )
                         DetailRow(
                             stringResource(R.string.device_mac),

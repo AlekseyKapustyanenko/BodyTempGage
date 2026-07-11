@@ -20,6 +20,13 @@ object T201Decoder {
 
     const val DEVICE_NAME_PREFIX = "MMC-T201"
 
+    /**
+     * The body-temperature fit was derived from worn-gauge data (skin ≈ 32–37 °C). Below
+     * this skin temperature both exponential terms collapse and the formula returns its
+     * ~36.4 °C constant regardless of the input, so no estimate is reported.
+     */
+    const val BODY_ESTIMATE_MIN_SKIN_C = 32.0
+
     /** Returns null when the frame carries no valid 0x2000 object. */
     fun decode(frame: MiBeaconFrame, timestampMillis: Long): GaugeReading? {
         val obj = frame.objects.firstOrNull { it.id == OBJECT_BODY_TEMPERATURE } ?: return null
@@ -51,7 +58,7 @@ object T201Decoder {
         return GaugeReading(
             gaugeTempC = temp1,
             ambientTempC = temp2,
-            bodyTempC = bodyTemperature(temp1, temp2),
+            bodyTempC = if (temp1 >= BODY_ESTIMATE_MIN_SKIN_C) bodyTemperature(temp1, temp2) else null,
             batteryPercent = battery,
             timestampMillis = timestampMillis,
         )

@@ -72,25 +72,34 @@ class MonitorService : LifecycleService() {
                 val liveFresh = live?.takeIf {
                     System.currentTimeMillis() - it.timestampMillis < LIVE_FRESH_MILLIS
                 }
-                val bodyTempC = liveFresh?.tempC ?: reading?.bodyTempC ?: return@collect
+                val bodyTempC = liveFresh?.tempC ?: reading?.bodyTempC
+                val bodyText = bodyTempC?.let { TempFormat.format(it, settings.useFahrenheit) }
 
-                val bodyText = TempFormat.format(bodyTempC, settings.useFahrenheit)
-                val text = if (reading != null) {
-                    getString(
+                val text = when {
+                    bodyText != null && reading != null -> getString(
                         R.string.notif_status_text,
                         bodyText,
                         TempFormat.format(reading.gaugeTempC, settings.useFahrenheit),
                         reading.batteryPercent,
                     )
-                } else {
-                    getString(R.string.notif_status_body_only, bodyText)
+
+                    bodyText != null -> getString(R.string.notif_status_body_only, bodyText)
+
+                    // Gauge visible but off the body: no valid body estimate.
+                    reading != null -> getString(
+                        R.string.notif_status_gauge_only,
+                        TempFormat.format(reading.gaugeTempC, settings.useFahrenheit),
+                        reading.batteryPercent,
+                    )
+
+                    else -> return@collect
                 }
                 manager.notify(
                     Notifications.STATUS_NOTIFICATION_ID,
                     Notifications.statusNotification(this@MonitorService, text),
                 )
 
-                if (settings.alertEnabled) {
+                if (settings.alertEnabled && bodyTempC != null) {
                     checkThresholds(manager, bodyTempC, settings)
                 }
             }
