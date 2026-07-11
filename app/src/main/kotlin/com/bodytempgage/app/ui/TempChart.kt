@@ -35,6 +35,7 @@ import androidx.compose.ui.unit.dp
 import com.bodytempgage.app.R
 import com.bodytempgage.app.data.AppSettings
 import com.bodytempgage.app.data.TempSample
+import com.bodytempgage.core.DisplayMode
 import java.util.Date
 import java.util.Locale
 import kotlin.math.ceil
@@ -61,7 +62,13 @@ fun TempChart(
     nowMillis: Long,
     modifier: Modifier = Modifier,
 ) {
-    if (samples.size < 2) {
+    // Chart only the series picked in the display-mode selector.
+    val showBody = settings.displayMode != DisplayMode.GAUGE
+    val showGauge = settings.displayMode != DisplayMode.BODY
+    val bodyCount = if (showBody) samples.count { it.bodyTempC != null } else 0
+    val gaugeCount = if (showGauge) samples.count { it.gaugeTempC != null } else 0
+
+    if (bodyCount < 2 && gaugeCount < 2) {
         Box(modifier = modifier, contentAlignment = Alignment.Center) {
             Text(
                 text = stringResource(R.string.chart_empty),
@@ -72,6 +79,8 @@ fun TempChart(
         }
         return
     }
+    val drawBody = bodyCount > 0
+    val drawGauge = gaugeCount > 0
 
     val context = LocalContext.current
     val timeFormat = remember { android.text.format.DateFormat.getTimeFormat(context) }
@@ -89,9 +98,8 @@ fun TempChart(
     fun display(tempC: Double): Double =
         if (fahrenheit) TempFormat.celsiusToFahrenheit(tempC) else tempC
 
-    val hasGauge = samples.any { it.gaugeTempC != null }
-    val hasBody = samples.any { it.bodyTempC != null }
-    val thresholds = if (settings.alertEnabled) {
+    // Threshold lines apply to the body estimate, so hide them with it.
+    val thresholds = if (settings.alertEnabled && drawBody) {
         listOf(
             settings.alertHighC to alertColor,
             settings.warnHighC to warnColor,
@@ -102,9 +110,9 @@ fun TempChart(
         emptyList()
     }
 
-    // Y bounds cover both series plus the enabled thresholds, with a little padding.
-    val allValues = samples.mapNotNull { s -> s.bodyTempC?.let { display(it) } } +
-        samples.mapNotNull { s -> s.gaugeTempC?.let { display(it) } } +
+    // Y bounds cover the visible series plus the enabled thresholds, with a little padding.
+    val allValues = (if (drawBody) samples.mapNotNull { s -> s.bodyTempC?.let { display(it) } } else emptyList()) +
+        (if (drawGauge) samples.mapNotNull { s -> s.gaugeTempC?.let { display(it) } } else emptyList()) +
         thresholds.map { display(it.first) }
     val pad = if (fahrenheit) 0.4 else 0.2
     val yMin = allValues.min() - pad
@@ -195,14 +203,14 @@ fun TempChart(
                 return path
             }
 
-            if (hasGauge) {
+            if (drawGauge) {
                 drawPath(
                     path = seriesPath { it.gaugeTempC },
                     color = gaugeColor,
                     style = Stroke(1.5.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round),
                 )
             }
-            if (hasBody) {
+            if (drawBody) {
                 drawPath(
                     path = seriesPath { it.bodyTempC },
                     color = bodyColor,
@@ -226,14 +234,13 @@ fun TempChart(
             )
         }
 
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            if (hasBody) {
+        // With a single series the selector above already names it — no legend needed.
+        if (drawBody && drawGauge) {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
                 LegendItem(bodyColor, stringResource(R.string.mode_body))
-            }
-            if (hasGauge) {
                 LegendItem(gaugeColor, stringResource(R.string.mode_gauge))
             }
         }
