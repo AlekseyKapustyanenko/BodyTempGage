@@ -25,6 +25,9 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
             )
+            // Debug-signed so the release APK is adb-installable and Data-Layer-pairs with a
+            // debug-signed phone build. Replace with a real signing config for distribution.
+            signingConfig = signingConfigs.getByName("debug")
         }
     }
 
