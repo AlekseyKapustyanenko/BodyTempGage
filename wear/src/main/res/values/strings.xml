@@ -30,6 +30,8 @@
     <string name="monitoring_on_hint">Scanning in the background</string>
     <string name="monitoring_off_hint">Monitoring paused</string>
     <string name="fever_alert">Temperature alerts</string>
+    <string name="alert_on_hint">Warn on threshold crossings</string>
+    <string name="alert_off_hint">Temperature alerts off</string>
     <string name="alert_threshold_high">High alert</string>
     <string name="warn_threshold_high">High warning</string>
     <string name="warn_threshold_low">Low warning</string>
@@ -46,8 +48,10 @@
     <!-- Tile -->
     <string name="tile_label">Temperature</string>
     <string name="tile_no_data">No recent data</string>
-    <string name="tile_start">Start</string>
-    <string name="tile_stop">Stop</string>
+    <string name="tile_monitor">Monitor</string>
+    <string name="tile_alerts_label">Alerts</string>
+    <string name="tile_on">On</string>
+    <string name="tile_off">Off</string>
 
     <!-- Watch-face complication -->
     <string name="complication_label">Body temperature</string>

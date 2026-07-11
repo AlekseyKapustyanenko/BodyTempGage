@@ -7,6 +7,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -26,7 +27,8 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.wear.compose.material.Button
+import androidx.wear.compose.material.Chip
+import androidx.wear.compose.material.ChipDefaults
 import androidx.wear.compose.material.MaterialTheme
 import androidx.wear.compose.material.Text
 import androidx.wear.compose.navigation.SwipeDismissableNavHost
@@ -150,8 +152,17 @@ private fun PermissionScreen(onRequest: () -> Unit) {
             style = MaterialTheme.typography.caption1,
             textAlign = TextAlign.Center,
         )
-        Button(onClick = onRequest) {
-            Text(stringResource(R.string.grant))
-        }
+        Chip(
+            onClick = onRequest,
+            label = {
+                Text(
+                    text = stringResource(R.string.grant),
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            },
+            colors = ChipDefaults.primaryChipColors(),
+            modifier = Modifier.fillMaxWidth(),
+        )
     }
 }
