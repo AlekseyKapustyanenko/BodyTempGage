@@ -33,8 +33,9 @@ import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.bodytempgage.app.R
-import com.bodytempgage.app.data.AppSettings
-import com.bodytempgage.app.data.TempSample
+import com.bodytempgage.common.data.AppSettings
+import com.bodytempgage.common.data.TempSample
+import com.bodytempgage.common.TempFormat
 import com.bodytempgage.core.DisplayMode
 import java.util.Date
 import java.util.Locale

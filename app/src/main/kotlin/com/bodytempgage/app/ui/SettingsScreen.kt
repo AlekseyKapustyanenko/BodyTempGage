@@ -31,7 +31,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.bodytempgage.app.AppContainer
 import com.bodytempgage.app.R
-import com.bodytempgage.app.data.AppSettings
+import com.bodytempgage.common.data.AppSettings
+import com.bodytempgage.common.TempFormat
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)

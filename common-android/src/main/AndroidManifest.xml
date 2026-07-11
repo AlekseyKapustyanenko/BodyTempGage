@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <application>
+
+        <!-- Receives phone <-> watch settings updates over the Wearable Data Layer, even when
+             the app process is not running. Declared here so both :app and :wear inherit it. -->
+        <service
+            android:name="com.bodytempgage.common.sync.SettingsSyncService"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.google.android.gms.wearable.DATA_CHANGED" />
+                <data
+                    android:scheme="wear"
+                    android:host="*"
+                    android:pathPrefix="/settings" />
+            </intent-filter>
+        </service>
+    </application>
+</manifest>

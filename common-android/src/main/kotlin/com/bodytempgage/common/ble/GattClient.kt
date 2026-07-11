@@ -1,4 +1,4 @@
-package com.bodytempgage.app.ble
+package com.bodytempgage.common.ble
 
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothDevice
@@ -10,7 +10,7 @@ import android.bluetooth.BluetoothManager
 import android.bluetooth.BluetoothProfile
 import android.content.Context
 import android.os.Build
-import com.bodytempgage.app.data.ReadingRepository
+import com.bodytempgage.common.data.ReadingRepository
 import com.bodytempgage.core.HealthThermometer
 import com.bodytempgage.core.T201Decoder
 import java.text.SimpleDateFormat

@@ -1,4 +1,4 @@
-package com.bodytempgage.app.data
+package com.bodytempgage.common.data
 
 import android.content.Context
 import androidx.datastore.preferences.core.booleanPreferencesKey
@@ -8,6 +8,7 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.bodytempgage.core.AlertThresholds
 import com.bodytempgage.core.DisplayMode
+import com.bodytempgage.core.SettingsSnapshot
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
@@ -117,5 +118,24 @@ class SettingsRepository(private val context: Context) {
 
     suspend fun setGattRequested(value: Boolean) {
         context.dataStore.edit { it[Keys.gattRequested] = value }
+    }
+
+    /**
+     * Writes every synced field of [snapshot] in a single transaction (one emission), used when
+     * applying a settings change received from the paired device. [SettingsSnapshot.updatedAt]
+     * and the device-local `gattRequested` flag are intentionally not persisted.
+     */
+    suspend fun applySyncedSnapshot(snapshot: SettingsSnapshot) {
+        context.dataStore.edit { p ->
+            snapshot.selectedMac?.let { p[Keys.selectedMac] = it } ?: p.remove(Keys.selectedMac)
+            snapshot.selectedName?.let { p[Keys.selectedName] = it } ?: p.remove(Keys.selectedName)
+            p[Keys.displayMode] = snapshot.displayMode.name
+            p[Keys.useFahrenheit] = snapshot.useFahrenheit
+            p[Keys.alertEnabled] = snapshot.alertEnabled
+            p[Keys.alertHighC] = snapshot.alertHighC
+            p[Keys.warnHighC] = snapshot.warnHighC
+            p[Keys.warnLowC] = snapshot.warnLowC
+            p[Keys.alertLowC] = snapshot.alertLowC
+        }
     }
 }

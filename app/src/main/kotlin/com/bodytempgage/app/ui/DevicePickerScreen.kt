@@ -28,7 +28,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.bodytempgage.app.AppContainer
 import com.bodytempgage.app.R
-import com.bodytempgage.app.ble.BleEngine
+import com.bodytempgage.common.ble.BleEngine
+import com.bodytempgage.common.TempFormat
 import com.bodytempgage.core.T201Decoder
 
 @OptIn(ExperimentalMaterial3Api::class)

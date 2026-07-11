@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">BodyTempGage</string>
+
+    <!-- Display modes -->
+    <string name="mode_gauge">Gauge</string>
+    <string name="mode_body">Body</string>
+    <string name="mode_both">Both</string>
+    <string name="label_gauge_temp">Gauge (skin)</string>
+    <string name="label_body_temp">Body</string>
+
+    <!-- Main screen -->
+    <string name="battery">Battery %1$d%%</string>
+    <string name="searching">Searching for the thermometer…</string>
+    <string name="bluetooth_off">Bluetooth is off</string>
+    <string name="scan_failed">Scan failed — toggle Bluetooth</string>
+    <string name="not_worn_hint">Gauge is off the body</string>
+    <string name="open_settings">Settings</string>
+
+    <!-- Device picker -->
+    <string name="select_device_title">Select thermometer</string>
+    <string name="scanning_hint">Scanning nearby…</string>
+    <string name="picker_empty">Nothing found yet. Make sure the thermometer is nearby.</string>
+    <string name="change_device">Change device</string>
+
+    <!-- Settings -->
+    <string name="settings">Settings</string>
+    <string name="unit_fahrenheit">Fahrenheit (°F)</string>
+    <string name="fever_alert">Temperature alerts</string>
+    <string name="alert_threshold_high">High alert</string>
+    <string name="warn_threshold_high">High warning</string>
+    <string name="warn_threshold_low">Low warning</string>
+    <string name="alert_threshold_low">Low alert</string>
+    <string name="display_mode">Display</string>
+    <string name="decrease">Decrease</string>
+    <string name="increase">Increase</string>
+
+    <!-- Permissions -->
+    <string name="permissions_title">Bluetooth permission needed</string>
+    <string name="permissions_text">The watch scans for your thermometer over Bluetooth LE.</string>
+    <string name="grant">Grant</string>
+
+    <!-- Notifications -->
+    <string name="notif_channel_status">Monitoring status</string>
+    <string name="notif_channel_alerts">Temperature alerts</string>
+    <string name="notif_channel_warnings">Temperature warnings</string>
+    <string name="notif_monitoring_title">Monitoring temperature</string>
+    <string name="notif_waiting">Waiting for a signal…</string>
+    <string name="notif_status_text">Body %1$s · Gauge %2$s · %3$d%%</string>
+    <string name="notif_status_body_only">Body %1$s</string>
+    <string name="notif_status_gauge_only">Gauge %1$s · %2$d%% · not worn</string>
+    <string name="notif_fever_title">High temperature!</string>
+    <string name="notif_low_title">Low temperature!</string>
+    <string name="notif_warn_high_title">Elevated temperature</string>
+    <string name="notif_warn_low_title">Lowered temperature</string>
+    <string name="notif_temp_text">Body temperature is %1$s</string>
+</resources>

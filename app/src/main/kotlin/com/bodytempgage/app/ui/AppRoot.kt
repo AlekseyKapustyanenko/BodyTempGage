@@ -32,7 +32,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.bodytempgage.app.AppContainer
 import com.bodytempgage.app.R
-import com.bodytempgage.app.ble.BleEngine
+import com.bodytempgage.common.ble.BleEngine
 import kotlinx.coroutines.launch
 
 enum class Screen { Main, Picker, Settings }

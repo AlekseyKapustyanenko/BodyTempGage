@@ -38,10 +38,23 @@ MMC-T201-2).
 
 ## Project structure
 
-| Module  | Contents |
-|---------|----------|
-| `:core` | Pure JVM Kotlin: MiBeacon parser, T201 decoder, models. No Android dependencies — ready for reuse in a future **Wear OS** module. |
-| `:app`  | Phone app: Jetpack Compose UI, BLE scanning, foreground monitoring service, fever alerts. |
+| Module            | Contents |
+|-------------------|----------|
+| `:core`           | Pure JVM Kotlin: MiBeacon parser, T201 decoder, threshold state machine, settings-sync snapshot/merge policy, models. No Android dependencies. |
+| `:common-android` | Shared Android library used by both apps: BLE scan (`BleEngine`), GATT client, in-memory reading hub, DataStore settings, and phone↔watch settings sync over the Wearable Data Layer. |
+| `:app`            | Phone app: Jetpack Compose UI, BLE scanning, foreground monitoring service, fever alerts. |
+| `:wear`           | **Wear OS companion**: Compose-for-Wear UI, its own BLE advertisement scan and monitoring service, local alerts, and settings sync with the phone. |
+
+### Wear OS companion
+
+The watch app reads the thermometer **directly** over BLE advertisements (it does not proxy
+through the phone), shows the same temperatures, and raises the same fever / low-temperature
+alerts. Alarm thresholds, the selected gauge, display mode, °F and alerts-on/off are **synced
+both ways** with the phone over the Wearable Data Layer — change them on either device and the
+other follows (last-write-wins). The Wear app installs and runs standalone (declared
+`com.google.android.wearable.standalone`); it shares the phone's `applicationId`
+(`com.bodytempgage`) and signing key, which the Data Layer requires for pairing. Build it with
+`./gradlew :wear:assembleDebug` (APK at `wear/build/outputs/apk/debug/`).
 
 ## Building
 
@@ -65,8 +78,7 @@ to work with `:core` alone (`SKIP_ANDROID=1 ./gradlew :core:test`).
 
 ## Roadmap
 
-- **Wear OS companion app** (planned): reuse `:core` and the scanning/data layer, add a
-  Compose for Wear UI and a tile/complication.
+- Wear OS **tile / complication** for at-a-glance body temperature.
 
 ## Disclaimer
 

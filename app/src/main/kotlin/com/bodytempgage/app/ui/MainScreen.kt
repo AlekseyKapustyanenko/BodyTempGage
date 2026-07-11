@@ -59,9 +59,10 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.bodytempgage.app.AppContainer
 import com.bodytempgage.app.R
-import com.bodytempgage.app.ble.BleEngine
-import com.bodytempgage.app.ble.GattClient
-import com.bodytempgage.app.data.AppSettings
+import com.bodytempgage.common.ble.BleEngine
+import com.bodytempgage.common.ble.GattClient
+import com.bodytempgage.common.data.AppSettings
+import com.bodytempgage.common.TempFormat
 import com.bodytempgage.app.service.MonitorService
 import com.bodytempgage.core.DisplayMode
 import kotlinx.coroutines.delay

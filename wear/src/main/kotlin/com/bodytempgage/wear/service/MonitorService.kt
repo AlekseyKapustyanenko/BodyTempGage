@@ -1,4 +1,4 @@
-package com.bodytempgage.app.service
+package com.bodytempgage.wear.service
 
 import android.app.NotificationManager
 import android.content.Context
@@ -8,26 +8,26 @@ import androidx.core.app.ServiceCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleService
 import androidx.lifecycle.lifecycleScope
-import com.bodytempgage.app.BodyTempGageApp
-import com.bodytempgage.app.R
-import com.bodytempgage.common.ble.BleEngine
-import com.bodytempgage.common.ble.GattClient
-import com.bodytempgage.common.data.AppSettings
 import com.bodytempgage.common.TempFormat
+import com.bodytempgage.common.ble.BleEngine
+import com.bodytempgage.common.data.AppSettings
 import com.bodytempgage.core.TempEvent
 import com.bodytempgage.core.ThresholdMonitor
+import com.bodytempgage.wear.R
+import com.bodytempgage.wear.WearApp
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.sample
 import kotlinx.coroutines.launch
 
 /**
  * Foreground service that keeps the BLE scan alive with the app closed, mirrors the latest
- * reading into a persistent notification, and raises warnings/alerts when body temperature
- * crosses the configured high or low thresholds.
+ * reading into a persistent notification, and raises warnings/alerts when the estimated body
+ * temperature crosses the configured thresholds. Advertisement-only (no GATT).
  */
 class MonitorService : LifecycleService() {
 
@@ -38,7 +38,7 @@ class MonitorService : LifecycleService() {
 
     override fun onCreate() {
         super.onCreate()
-        val container = BodyTempGageApp.container(this)
+        val container = WearApp.container(this)
 
         ServiceCompat.startForeground(
             this,
@@ -51,69 +51,50 @@ class MonitorService : LifecycleService() {
 
         val manager = getSystemService(NotificationManager::class.java)
 
-        // Restore the user-requested GATT connection when monitoring starts.
-        lifecycleScope.launch {
-            val settings = container.settings.flow.first()
-            val mac = settings.selectedMac
-            if (settings.gattRequested && mac != null &&
-                container.gattClient.state.value == GattClient.State.DISCONNECTED
-            ) {
-                container.gattClient.connect(mac)
-            }
-        }
+        // Advertisements arrive several times a second; posting a Wear notification that often
+        // (and on the main thread) starves the UI. Run off the main thread and sample so the
+        // status notification refreshes at most a few times a minute, only when the text changes.
+        lifecycleScope.launch(Dispatchers.Default) {
+            var lastText: String? = null
+            combine(container.readings.latest, container.settings.flow, ::Pair)
+                .sample(NOTIFY_THROTTLE_MILLIS)
+                .collect { (reading, settings) ->
+                    reading ?: return@collect
+                    val bodyTempC = reading.bodyTempC
+                    val text = if (bodyTempC != null) {
+                        getString(
+                            R.string.notif_status_text,
+                            TempFormat.format(bodyTempC, settings.useFahrenheit),
+                            TempFormat.format(reading.gaugeTempC, settings.useFahrenheit),
+                            reading.batteryPercent,
+                        )
+                    } else {
+                        // Gauge visible but off the body: no valid body estimate.
+                        getString(
+                            R.string.notif_status_gauge_only,
+                            TempFormat.format(reading.gaugeTempC, settings.useFahrenheit),
+                            reading.batteryPercent,
+                        )
+                    }
+                    if (text != lastText) {
+                        lastText = text
+                        manager.notify(
+                            Notifications.STATUS_NOTIFICATION_ID,
+                            Notifications.statusNotification(this@MonitorService, text),
+                        )
+                    }
 
-        lifecycleScope.launch {
-            combine(
-                container.readings.latest,
-                container.readings.liveBodyTemp,
-                container.settings.flow,
-                ::Triple,
-            ).collect { (reading, live, settings) ->
-                // The gauge's own reading (GATT) wins over the advertisement estimate.
-                val liveFresh = live?.takeIf {
-                    System.currentTimeMillis() - it.timestampMillis < LIVE_FRESH_MILLIS
+                    if (settings.alertEnabled && bodyTempC != null) {
+                        checkThresholds(manager, bodyTempC, settings)
+                    }
                 }
-                val bodyTempC = liveFresh?.tempC ?: reading?.bodyTempC
-                val bodyText = bodyTempC?.let { TempFormat.format(it, settings.useFahrenheit) }
-
-                val text = when {
-                    bodyText != null && reading != null -> getString(
-                        R.string.notif_status_text,
-                        bodyText,
-                        TempFormat.format(reading.gaugeTempC, settings.useFahrenheit),
-                        reading.batteryPercent,
-                    )
-
-                    bodyText != null -> getString(R.string.notif_status_body_only, bodyText)
-
-                    // Gauge visible but off the body: no valid body estimate.
-                    reading != null -> getString(
-                        R.string.notif_status_gauge_only,
-                        TempFormat.format(reading.gaugeTempC, settings.useFahrenheit),
-                        reading.batteryPercent,
-                    )
-
-                    else -> return@collect
-                }
-                manager.notify(
-                    Notifications.STATUS_NOTIFICATION_ID,
-                    Notifications.statusNotification(this@MonitorService, text),
-                )
-
-                if (settings.alertEnabled && bodyTempC != null) {
-                    checkThresholds(manager, bodyTempC, settings)
-                }
-            }
         }
 
         // Flag stale data in the notification when the gauge disappears.
-        lifecycleScope.launch {
+        lifecycleScope.launch(Dispatchers.Default) {
             while (true) {
                 delay(60_000)
-                val last = maxOf(
-                    container.readings.latest.value?.timestampMillis ?: 0L,
-                    container.readings.liveBodyTemp.value?.timestampMillis ?: 0L,
-                )
+                val last = container.readings.latest.value?.timestampMillis ?: 0L
                 if (System.currentTimeMillis() - last > STALE_AFTER_MILLIS) {
                     manager.notify(
                         Notifications.STATUS_NOTIFICATION_ID,
@@ -159,7 +140,7 @@ class MonitorService : LifecycleService() {
     }
 
     override fun onDestroy() {
-        BodyTempGageApp.container(this).bleEngine.stop(BleEngine.Client.SERVICE)
+        WearApp.container(this).bleEngine.stop(BleEngine.Client.SERVICE)
         _isRunning.value = false
         super.onDestroy()
     }
@@ -168,7 +149,9 @@ class MonitorService : LifecycleService() {
         private const val STALE_AFTER_MILLIS = 5 * 60_000L
         private const val ALERT_COOLDOWN_MILLIS = 5 * 60_000L
         private const val REARM_HYSTERESIS_C = 0.2
-        const val LIVE_FRESH_MILLIS = 60_000L
+
+        /** Minimum spacing between status-notification refreshes (advertisements are far faster). */
+        private const val NOTIFY_THROTTLE_MILLIS = 10_000L
 
         private val _isRunning = MutableStateFlow(false)
         val isRunning: StateFlow<Boolean> = _isRunning.asStateFlow()

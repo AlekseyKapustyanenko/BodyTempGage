@@ -1,4 +1,4 @@
-package com.bodytempgage.app.ble
+package com.bodytempgage.common.ble
 
 import android.Manifest
 import android.annotation.SuppressLint
@@ -12,7 +12,7 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.os.ParcelUuid
 import androidx.core.content.ContextCompat
-import com.bodytempgage.app.data.ReadingRepository
+import com.bodytempgage.common.data.ReadingRepository
 import com.bodytempgage.core.MiBeaconParser
 import com.bodytempgage.core.T201Decoder
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -29,6 +29,12 @@ import kotlinx.coroutines.flow.asStateFlow
 class BleEngine(
     private val context: Context,
     private val readings: ReadingRepository,
+    /**
+     * Scan mode while the UI is visible. Scan callbacks are delivered on the main looper, so
+     * low-power devices (watches) pass [ScanSettings.SCAN_MODE_BALANCED] to keep the callback
+     * rate from starving the UI thread.
+     */
+    private val uiScanMode: Int = ScanSettings.SCAN_MODE_LOW_LATENCY,
 ) {
     enum class Client { UI, SERVICE }
 
@@ -104,10 +110,7 @@ class BleEngine(
                 .build(),
         )
         val settings = ScanSettings.Builder()
-            .setScanMode(
-                if (withUi) ScanSettings.SCAN_MODE_LOW_LATENCY
-                else ScanSettings.SCAN_MODE_BALANCED,
-            )
+            .setScanMode(if (withUi) uiScanMode else ScanSettings.SCAN_MODE_BALANCED)
             .build()
 
         scanner.startScan(filters, settings, callback)
