@@ -41,9 +41,12 @@ private const val UI_SAMPLE_MILLIS = 1_000L
 @Composable
 fun MainScreen(
     container: WearContainer,
-    settings: AppSettings,
+    initialSettings: AppSettings,
     onOpenSettings: () -> Unit,
 ) {
+    // Observe live so display-mode/unit/threshold changes (local or synced from the phone)
+    // apply without leaving and re-entering the screen.
+    val settings by container.settings.flow.collectAsStateWithLifecycle(initialValue = initialSettings)
     // Advertisements repeat the same measurement several times a second and every reading
     // carries a fresh timestamp, so collecting the raw flow recomposes the list on every scan
     // callback — visible as scroll stutter on the watch. Only recompose when the displayed

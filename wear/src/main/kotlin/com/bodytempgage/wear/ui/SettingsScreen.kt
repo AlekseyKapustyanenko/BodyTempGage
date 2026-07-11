@@ -8,12 +8,14 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.wear.compose.foundation.lazy.ScalingLazyColumn
 import androidx.wear.compose.foundation.lazy.items
 import androidx.wear.compose.foundation.lazy.rememberScalingLazyListState
@@ -38,9 +40,12 @@ import kotlinx.coroutines.launch
 @Composable
 fun SettingsScreen(
     container: WearContainer,
-    settings: AppSettings,
+    initialSettings: AppSettings,
     onChangeDevice: () -> Unit,
 ) {
+    // Observe live so toggles and the selected display-mode chip update the moment a change
+    // is persisted (or arrives from the phone over the Data Layer).
+    val settings by container.settings.flow.collectAsStateWithLifecycle(initialValue = initialSettings)
     val scope = rememberCoroutineScope()
     val listState = rememberScalingLazyListState()
 

@@ -13,6 +13,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -24,7 +25,6 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.wear.compose.material.Button
 import androidx.wear.compose.material.MaterialTheme
 import androidx.wear.compose.material.Text
@@ -34,7 +34,9 @@ import androidx.wear.compose.navigation.rememberSwipeDismissableNavController
 import com.bodytempgage.wear.WearContainer
 import com.bodytempgage.wear.R
 import com.bodytempgage.common.ble.BleEngine
+import com.bodytempgage.common.data.AppSettings
 import com.bodytempgage.wear.service.MonitorService
+import kotlinx.coroutines.flow.first
 
 private object Routes {
     const val MAIN = "main"
@@ -76,22 +78,28 @@ fun WearAppRoot(container: WearContainer) {
     // Keep monitoring (and alerting) alive in the background once permitted.
     LaunchedEffect(Unit) { MonitorService.start(context) }
 
-    val settingsOrNull by container.settings.flow.collectAsStateWithLifecycle(initialValue = null)
-    val settings = settingsOrNull ?: return
+    // Wait once for the first DataStore emission (avoids an empty first frame). Each screen
+    // observes the live settings flow itself: nav destination lambdas hold on to their captured
+    // values, so passing the current settings down from here would leave the on-screen
+    // destination rendering a stale snapshot until it is revisited.
+    val initialSettings by produceState<AppSettings?>(initialValue = null) {
+        value = container.settings.flow.first()
+    }
+    val settings = initialSettings ?: return
 
     val navController = rememberSwipeDismissableNavController()
     SwipeDismissableNavHost(navController = navController, startDestination = Routes.MAIN) {
         composable(Routes.MAIN) {
             MainScreen(
                 container = container,
-                settings = settings,
+                initialSettings = settings,
                 onOpenSettings = { navController.navigate(Routes.SETTINGS) },
             )
         }
         composable(Routes.SETTINGS) {
             SettingsScreen(
                 container = container,
-                settings = settings,
+                initialSettings = settings,
                 onChangeDevice = { navController.navigate(Routes.PICKER) },
             )
         }
