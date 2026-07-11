@@ -30,6 +30,13 @@ data class AppSettings(
     val alertLowC: Double = 35.0,
     /** User asked for a GATT connection to the gauge (exact device-computed reading). */
     val gattRequested: Boolean = false,
+    /**
+     * Background monitoring is on: the foreground service keeps the BLE scan alive with the app
+     * closed. Turning it off stops the scan (and the service) to save battery. Device-local, like
+     * [gattRequested] — each device runs its own scan, so this must not follow the user across
+     * devices.
+     */
+    val monitoringEnabled: Boolean = true,
 ) {
     val thresholds: AlertThresholds
         get() = AlertThresholds(
@@ -55,6 +62,7 @@ class SettingsRepository(private val context: Context) {
         val warnLowC = doublePreferencesKey("warn_low_c")
         val alertLowC = doublePreferencesKey("alert_low_c")
         val gattRequested = booleanPreferencesKey("gatt_requested")
+        val monitoringEnabled = booleanPreferencesKey("monitoring_enabled")
     }
 
     val flow: Flow<AppSettings> = context.dataStore.data.map { p ->
@@ -71,6 +79,7 @@ class SettingsRepository(private val context: Context) {
             warnLowC = p[Keys.warnLowC] ?: 35.5,
             alertLowC = p[Keys.alertLowC] ?: 35.0,
             gattRequested = p[Keys.gattRequested] ?: false,
+            monitoringEnabled = p[Keys.monitoringEnabled] ?: true,
         )
     }
 
@@ -118,6 +127,10 @@ class SettingsRepository(private val context: Context) {
 
     suspend fun setGattRequested(value: Boolean) {
         context.dataStore.edit { it[Keys.gattRequested] = value }
+    }
+
+    suspend fun setMonitoringEnabled(value: Boolean) {
+        context.dataStore.edit { it[Keys.monitoringEnabled] = value }
     }
 
     /**

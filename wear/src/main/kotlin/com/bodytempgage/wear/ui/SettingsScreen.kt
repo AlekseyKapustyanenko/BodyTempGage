@@ -67,6 +67,29 @@ fun SettingsScreen(
 
             item {
                 ToggleChip(
+                    checked = settings.monitoringEnabled,
+                    onCheckedChange = { scope.launch { container.settings.setMonitoringEnabled(it) } },
+                    label = { Text(stringResource(R.string.monitoring_toggle)) },
+                    secondaryLabel = {
+                        Text(
+                            stringResource(
+                                if (settings.monitoringEnabled) R.string.monitoring_on_hint
+                                else R.string.monitoring_off_hint,
+                            ),
+                        )
+                    },
+                    toggleControl = {
+                        androidx.wear.compose.material.Icon(
+                            imageVector = ToggleChipDefaults.switchIcon(settings.monitoringEnabled),
+                            contentDescription = null,
+                        )
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+
+            item {
+                ToggleChip(
                     checked = settings.alertEnabled,
                     onCheckedChange = { scope.launch { container.settings.setAlertEnabled(it) } },
                     label = { Text(stringResource(R.string.fever_alert)) },
