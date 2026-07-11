@@ -1,6 +1,7 @@
 package com.bodytempgage.wear.service
 
 import android.app.NotificationManager
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.pm.ServiceInfo
@@ -9,6 +10,7 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleService
 import androidx.lifecycle.lifecycleScope
 import androidx.wear.tiles.TileService
+import androidx.wear.watchface.complications.datasource.ComplicationDataSourceUpdateRequester
 import com.bodytempgage.common.TempFormat
 import com.bodytempgage.common.ble.BleEngine
 import com.bodytempgage.common.data.AppSettings
@@ -16,6 +18,7 @@ import com.bodytempgage.core.TempEvent
 import com.bodytempgage.core.ThresholdMonitor
 import com.bodytempgage.wear.R
 import com.bodytempgage.wear.WearApp
+import com.bodytempgage.wear.complication.TempComplicationService
 import com.bodytempgage.wear.tile.TempTileService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -84,9 +87,13 @@ class MonitorService : LifecycleService() {
                             Notifications.STATUS_NOTIFICATION_ID,
                             Notifications.statusNotification(this@MonitorService, text),
                         )
-                        // Keep the temperature tile in step with the latest reading.
+                        // Keep the temperature tile and watch-face complication in step.
                         TileService.getUpdater(this@MonitorService)
                             .requestUpdate(TempTileService::class.java)
+                        ComplicationDataSourceUpdateRequester.create(
+                            applicationContext,
+                            ComponentName(this@MonitorService, TempComplicationService::class.java),
+                        ).requestUpdateAll()
                     }
 
                     if (settings.alertEnabled && bodyTempC != null) {

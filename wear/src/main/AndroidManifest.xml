@@ -69,5 +69,24 @@
                 android:name="androidx.wear.tiles.PREVIEW"
                 android:resource="@drawable/ic_launcher_foreground" />
         </service>
+
+        <!-- Watch-face complication: current body temperature in a clock-screen slot. -->
+        <service
+            android:name=".complication.TempComplicationService"
+            android:exported="true"
+            android:icon="@drawable/ic_stat_thermometer"
+            android:label="@string/complication_label"
+            android:permission="com.google.android.wearable.permission.BIND_COMPLICATION_PROVIDER">
+            <intent-filter>
+                <action android:name="android.support.wearable.complications.ACTION_COMPLICATION_UPDATE_REQUEST" />
+            </intent-filter>
+            <meta-data
+                android:name="android.support.wearable.complications.SUPPORTED_TYPES"
+                android:value="SHORT_TEXT,LONG_TEXT" />
+            <!-- Slow fallback only; the monitor service pushes updates when values change. -->
+            <meta-data
+                android:name="android.support.wearable.complications.UPDATE_PERIOD_SECONDS"
+                android:value="600" />
+        </service>
     </application>
 </manifest>
