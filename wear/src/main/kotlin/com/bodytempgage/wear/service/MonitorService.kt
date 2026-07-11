@@ -15,11 +15,13 @@ import com.bodytempgage.core.TempEvent
 import com.bodytempgage.core.ThresholdMonitor
 import com.bodytempgage.wear.R
 import com.bodytempgage.wear.WearApp
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.sample
 import kotlinx.coroutines.launch
 
 /**
@@ -49,29 +51,38 @@ class MonitorService : LifecycleService() {
 
         val manager = getSystemService(NotificationManager::class.java)
 
-        lifecycleScope.launch {
+        // Advertisements arrive several times a second; posting a Wear notification that often
+        // (and on the main thread) starves the UI. Run off the main thread and sample so the
+        // status notification refreshes at most a few times a minute, only when the text changes.
+        lifecycleScope.launch(Dispatchers.Default) {
+            var lastText: String? = null
             combine(container.readings.latest, container.settings.flow, ::Pair)
+                .sample(NOTIFY_THROTTLE_MILLIS)
                 .collect { (reading, settings) ->
-                    val bodyTempC = reading?.bodyTempC
-                    val text = when {
-                        reading == null -> return@collect
-                        bodyTempC != null -> getString(
+                    reading ?: return@collect
+                    val bodyTempC = reading.bodyTempC
+                    val text = if (bodyTempC != null) {
+                        getString(
                             R.string.notif_status_text,
                             TempFormat.format(bodyTempC, settings.useFahrenheit),
                             TempFormat.format(reading.gaugeTempC, settings.useFahrenheit),
                             reading.batteryPercent,
                         )
+                    } else {
                         // Gauge visible but off the body: no valid body estimate.
-                        else -> getString(
+                        getString(
                             R.string.notif_status_gauge_only,
                             TempFormat.format(reading.gaugeTempC, settings.useFahrenheit),
                             reading.batteryPercent,
                         )
                     }
-                    manager.notify(
-                        Notifications.STATUS_NOTIFICATION_ID,
-                        Notifications.statusNotification(this@MonitorService, text),
-                    )
+                    if (text != lastText) {
+                        lastText = text
+                        manager.notify(
+                            Notifications.STATUS_NOTIFICATION_ID,
+                            Notifications.statusNotification(this@MonitorService, text),
+                        )
+                    }
 
                     if (settings.alertEnabled && bodyTempC != null) {
                         checkThresholds(manager, bodyTempC, settings)
@@ -80,7 +91,7 @@ class MonitorService : LifecycleService() {
         }
 
         // Flag stale data in the notification when the gauge disappears.
-        lifecycleScope.launch {
+        lifecycleScope.launch(Dispatchers.Default) {
             while (true) {
                 delay(60_000)
                 val last = container.readings.latest.value?.timestampMillis ?: 0L
@@ -138,6 +149,9 @@ class MonitorService : LifecycleService() {
         private const val STALE_AFTER_MILLIS = 5 * 60_000L
         private const val ALERT_COOLDOWN_MILLIS = 5 * 60_000L
         private const val REARM_HYSTERESIS_C = 0.2
+
+        /** Minimum spacing between status-notification refreshes (advertisements are far faster). */
+        private const val NOTIFY_THROTTLE_MILLIS = 10_000L
 
         private val _isRunning = MutableStateFlow(false)
         val isRunning: StateFlow<Boolean> = _isRunning.asStateFlow()
