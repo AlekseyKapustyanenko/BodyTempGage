@@ -1,24 +1,19 @@
-package com.bodytempgage.app.ui
+package com.bodytempgage.wear.ui
 
-import android.content.Intent
-import android.provider.Settings
-import androidx.activity.compose.BackHandler
+import android.Manifest
+import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -30,18 +25,26 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.bodytempgage.app.AppContainer
-import com.bodytempgage.app.R
+import androidx.wear.compose.material.Button
+import androidx.wear.compose.material.MaterialTheme
+import androidx.wear.compose.material.Text
+import androidx.wear.compose.navigation.SwipeDismissableNavHost
+import androidx.wear.compose.navigation.composable
+import androidx.wear.compose.navigation.rememberSwipeDismissableNavController
+import com.bodytempgage.wear.WearContainer
+import com.bodytempgage.wear.R
 import com.bodytempgage.common.ble.BleEngine
-import kotlinx.coroutines.launch
+import com.bodytempgage.wear.service.MonitorService
 
-enum class Screen { Main, Picker, Settings }
+private object Routes {
+    const val MAIN = "main"
+    const val SETTINGS = "settings"
+    const val PICKER = "picker"
+}
 
 @Composable
-fun AppRoot(container: AppContainer) {
+fun WearAppRoot(container: WearContainer) {
     val context = LocalContext.current
-    val settingsOrNull by container.settings.flow.collectAsStateWithLifecycle(initialValue = null)
-    val scope = rememberCoroutineScope()
 
     var permissionsGranted by remember { mutableStateOf(BleEngine.hasScanPermission(context)) }
     val permissionLauncher = rememberLauncherForActivityResult(
@@ -66,87 +69,71 @@ fun AppRoot(container: AppContainer) {
     }
 
     if (!permissionsGranted) {
-        PermissionScreen(onRequest = { permissionLauncher.launch(BleEngine.scanPermissions()) })
+        PermissionScreen(onRequest = { permissionLauncher.launch(requiredPermissions()) })
         return
     }
 
-    // Wait for the first DataStore emission so the device picker doesn't flash on launch.
+    // Keep monitoring (and alerting) alive in the background once permitted.
+    LaunchedEffect(Unit) { MonitorService.start(context) }
+
+    val settingsOrNull by container.settings.flow.collectAsStateWithLifecycle(initialValue = null)
     val settings = settingsOrNull ?: return
 
-    var screen by rememberSaveable { mutableStateOf(Screen.Main) }
-    val effectiveScreen = if (settings.selectedMac == null && screen == Screen.Main) {
-        Screen.Picker
-    } else {
-        screen
-    }
-
-    when (effectiveScreen) {
-        Screen.Picker -> {
-            BackHandler(enabled = settings.selectedMac != null) { screen = Screen.Main }
-            DevicePickerScreen(
+    val navController = rememberSwipeDismissableNavController()
+    SwipeDismissableNavHost(navController = navController, startDestination = Routes.MAIN) {
+        composable(Routes.MAIN) {
+            MainScreen(
                 container = container,
-                onSelected = { mac, name ->
-                    container.gattClient.disconnect()
-                    scope.launch {
-                        container.settings.setSelectedDevice(mac, name)
-                        container.settings.setGattRequested(false)
-                        container.readings.resetLatest()
-                    }
-                    screen = Screen.Main
-                },
+                settings = settings,
+                onOpenSettings = { navController.navigate(Routes.SETTINGS) },
             )
         }
-
-        Screen.Settings -> {
-            BackHandler { screen = Screen.Main }
+        composable(Routes.SETTINGS) {
             SettingsScreen(
                 container = container,
                 settings = settings,
-                onChangeDevice = { screen = Screen.Picker },
-                onBack = { screen = Screen.Main },
+                onChangeDevice = { navController.navigate(Routes.PICKER) },
             )
         }
-
-        Screen.Main -> MainScreen(
-            container = container,
-            settings = settings,
-            onOpenSettings = { screen = Screen.Settings },
-        )
+        composable(Routes.PICKER) {
+            DevicePickerScreen(
+                container = container,
+                onSelected = { navController.popBackStack(Routes.MAIN, inclusive = false) },
+            )
+        }
     }
+}
+
+/** BLE scan permissions, plus notifications on API 33+ so alerts can be shown. */
+private fun requiredPermissions(): Array<String> {
+    val perms = BleEngine.scanPermissions().toMutableList()
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        perms += Manifest.permission.POST_NOTIFICATIONS
+    }
+    return perms.toTypedArray()
 }
 
 @Composable
 private fun PermissionScreen(onRequest: () -> Unit) {
-    val context = LocalContext.current
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(32.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterVertically),
+            .padding(24.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterVertically),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(
             text = stringResource(R.string.permissions_title),
-            style = MaterialTheme.typography.headlineSmall,
+            style = MaterialTheme.typography.title3,
             textAlign = TextAlign.Center,
         )
         Text(
             text = stringResource(R.string.permissions_text),
-            style = MaterialTheme.typography.bodyMedium,
+            style = MaterialTheme.typography.caption1,
             textAlign = TextAlign.Center,
         )
         Button(onClick = onRequest) {
             Text(stringResource(R.string.grant))
-        }
-        Button(onClick = {
-            context.startActivity(
-                Intent(
-                    Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
-                    android.net.Uri.fromParts("package", context.packageName, null),
-                ),
-            )
-        }) {
-            Text(stringResource(R.string.open_app_settings))
         }
     }
 }

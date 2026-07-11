@@ -23,8 +23,11 @@ dependencyResolutionManagement {
 rootProject.name = "BodyTempGage"
 
 include(":core")
-// The :app module needs the Android SDK and Google Maven (dl.google.com).
-// Set SKIP_ANDROID=1 to work on :core alone in restricted environments (e.g. CI without SDK).
+// The :app, :common-android and :wear modules need the Android SDK and Google Maven
+// (dl.google.com). Set SKIP_ANDROID=1 to work on :core alone in restricted environments
+// (e.g. CI without the SDK).
 if (System.getenv("SKIP_ANDROID") == null) {
+    include(":common-android")
     include(":app")
+    include(":wear")
 }

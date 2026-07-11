@@ -1,4 +1,4 @@
-package com.bodytempgage.app.ble
+package com.bodytempgage.common.ble
 
 import android.Manifest
 import android.annotation.SuppressLint
@@ -12,7 +12,7 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.os.ParcelUuid
 import androidx.core.content.ContextCompat
-import com.bodytempgage.app.data.ReadingRepository
+import com.bodytempgage.common.data.ReadingRepository
 import com.bodytempgage.core.MiBeaconParser
 import com.bodytempgage.core.T201Decoder
 import kotlinx.coroutines.flow.MutableStateFlow

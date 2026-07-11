@@ -1,25 +1,29 @@
-package com.bodytempgage.app
+package com.bodytempgage.wear
 
 import android.app.Application
 import android.content.Context
 import com.bodytempgage.common.ble.BleEngine
-import com.bodytempgage.common.ble.GattClient
 import com.bodytempgage.common.data.ReadingRepository
 import com.bodytempgage.common.data.SettingsRepository
 import com.bodytempgage.common.sync.SettingsSync
-import com.bodytempgage.app.service.Notifications
+import com.bodytempgage.common.sync.SettingsSyncProvider
+import com.bodytempgage.wear.service.Notifications
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 
-class AppContainer(context: Context) {
+/**
+ * Dependency container for the watch app. Reuses the shared BLE scan, reading hub, settings
+ * store and Data-Layer sync from `:common-android`. There is no GATT client — the watch reads
+ * the gauge from BLE advertisements only.
+ */
+class WearContainer(context: Context) {
     val settings = SettingsRepository(context)
     val readings = ReadingRepository()
     val bleEngine = BleEngine(context, readings)
-    val gattClient = GattClient(context, readings)
 
-    /** Mirrors settings changes to/from the paired Wear OS watch over the Data Layer. */
+    /** Mirrors settings changes to/from the paired phone over the Data Layer. */
     val settingsSync = SettingsSync(context, settings)
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
@@ -32,9 +36,9 @@ class AppContainer(context: Context) {
     }
 }
 
-class BodyTempGageApp : Application(), com.bodytempgage.common.sync.SettingsSyncProvider {
+class WearApp : Application(), SettingsSyncProvider {
 
-    lateinit var container: AppContainer
+    lateinit var container: WearContainer
         private set
 
     override val settingsSync: SettingsSync
@@ -42,12 +46,12 @@ class BodyTempGageApp : Application(), com.bodytempgage.common.sync.SettingsSync
 
     override fun onCreate() {
         super.onCreate()
-        container = AppContainer(this)
+        container = WearContainer(this)
         Notifications.createChannels(this)
     }
 
     companion object {
-        fun container(context: Context): AppContainer =
-            (context.applicationContext as BodyTempGageApp).container
+        fun container(context: Context): WearContainer =
+            (context.applicationContext as WearApp).container
     }
 }

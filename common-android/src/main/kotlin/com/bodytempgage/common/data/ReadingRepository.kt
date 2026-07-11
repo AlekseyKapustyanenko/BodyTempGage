@@ -1,4 +1,4 @@
-package com.bodytempgage.app.data
+package com.bodytempgage.common.data
 
 import com.bodytempgage.core.GaugeReading
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -30,8 +30,8 @@ data class TempSample(
 
 /**
  * In-memory hub for decoded advertisements and GATT notifications. Fed by
- * [com.bodytempgage.app.ble.BleEngine] and [com.bodytempgage.app.ble.GattClient],
- * observed by both the UI and [com.bodytempgage.app.service.MonitorService].
+ * [com.bodytempgage.common.ble.BleEngine] and [com.bodytempgage.common.ble.GattClient],
+ * observed by both the UI and the foreground monitor service.
  */
 class ReadingRepository {
 

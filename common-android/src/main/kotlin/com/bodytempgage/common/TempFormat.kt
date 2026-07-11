@@ -1,4 +1,4 @@
-package com.bodytempgage.app.ui
+package com.bodytempgage.common
 
 import java.util.Locale
 
