@@ -33,9 +33,12 @@
     <string name="settings">Settings</string>
     <string name="back">Back</string>
     <string name="unit_fahrenheit">Show temperature in Fahrenheit (°F)</string>
-    <string name="fever_alert">Fever alert</string>
-    <string name="fever_alert_desc">Notify when body temperature reaches the threshold</string>
-    <string name="alert_threshold">Alert threshold</string>
+    <string name="fever_alert">Temperature alerts</string>
+    <string name="fever_alert_desc">Notify when body temperature goes above or below the thresholds</string>
+    <string name="alert_threshold_high">High alert</string>
+    <string name="warn_threshold_high">High warning</string>
+    <string name="warn_threshold_low">Low warning</string>
+    <string name="alert_threshold_low">Low alert</string>
     <string name="change_device">Change device</string>
     <string name="about_title">About</string>
     <string name="about_text">Reads Xiaomi Miaomiaoce MMC-T201 thermometers over Bluetooth LE advertisements — no pairing needed. Body temperature is estimated from the two on-device sensors using the community formula from Home Assistant\'s ble_monitor (issue #264).</string>
@@ -61,11 +64,19 @@
 
     <!-- Notifications -->
     <string name="notif_channel_status">Monitoring status</string>
-    <string name="notif_channel_alerts">Fever alerts</string>
+    <string name="notif_channel_alerts">Temperature alerts</string>
+    <string name="notif_channel_warnings">Temperature warnings</string>
     <string name="notif_monitoring_title">Monitoring temperature</string>
     <string name="notif_waiting">Waiting for a signal from the thermometer…</string>
     <string name="notif_status_text">Body %1$s · Gauge %2$s · Battery %3$d%%</string>
     <string name="notif_status_body_only">Body %1$s</string>
     <string name="notif_fever_title">High temperature!</string>
-    <string name="notif_fever_text">Body temperature is %1$s</string>
+    <string name="notif_low_title">Low temperature!</string>
+    <string name="notif_warn_high_title">Elevated temperature</string>
+    <string name="notif_warn_low_title">Lowered temperature</string>
+    <string name="notif_temp_text">Body temperature is %1$s</string>
+
+    <!-- Chart -->
+    <string name="chart_title">History</string>
+    <string name="chart_empty">Collecting data — the chart appears after a few readings.</string>
 </resources>

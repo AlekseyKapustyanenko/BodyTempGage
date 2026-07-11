@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
@@ -82,6 +83,7 @@ fun MainScreen(
     val scanState by container.bleEngine.state.collectAsStateWithLifecycle()
     val gattState by container.gattClient.state.collectAsStateWithLifecycle()
     val monitoring by MonitorService.isRunning.collectAsStateWithLifecycle()
+    val history by container.readings.history.collectAsStateWithLifecycle()
 
     val now = rememberNowMillis()
     // The gauge's own reading (GATT) wins over the advertisement estimate while fresh.
@@ -161,11 +163,18 @@ fun MainScreen(
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     } else {
-                        val fever = settings.alertEnabled && bodyTempC != null &&
-                            bodyTempC >= settings.alertThresholdC
-                        val bodyColor =
-                            if (fever) MaterialTheme.colorScheme.error
-                            else MaterialTheme.colorScheme.onSurface
+                        val bodyColor = when {
+                            !settings.alertEnabled || bodyTempC == null ->
+                                MaterialTheme.colorScheme.onSurface
+
+                            bodyTempC >= settings.alertHighC || bodyTempC <= settings.alertLowC ->
+                                MaterialTheme.colorScheme.error
+
+                            bodyTempC >= settings.warnHighC || bodyTempC <= settings.warnLowC ->
+                                warningColor()
+
+                            else -> MaterialTheme.colorScheme.onSurface
+                        }
                         val bodySuffix = if (live != null) {
                             " · " + stringResource(R.string.source_device)
                         } else {
@@ -223,6 +232,29 @@ fun MainScreen(
                             now = now,
                         )
                     }
+                }
+            }
+
+            // Temperature history chart
+            Card(modifier = Modifier.fillMaxWidth()) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    Text(
+                        text = stringResource(R.string.chart_title),
+                        style = MaterialTheme.typography.titleMedium,
+                    )
+                    TempChart(
+                        samples = history,
+                        settings = settings,
+                        nowMillis = now,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(200.dp),
+                    )
                 }
             }
 

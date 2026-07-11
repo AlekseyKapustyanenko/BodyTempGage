@@ -12,7 +12,10 @@ import com.bodytempgage.app.BodyTempGageApp
 import com.bodytempgage.app.R
 import com.bodytempgage.app.ble.BleEngine
 import com.bodytempgage.app.ble.GattClient
+import com.bodytempgage.app.data.AppSettings
 import com.bodytempgage.app.ui.TempFormat
+import com.bodytempgage.core.TempEvent
+import com.bodytempgage.core.ThresholdMonitor
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -23,13 +26,15 @@ import kotlinx.coroutines.launch
 
 /**
  * Foreground service that keeps the BLE scan alive with the app closed, mirrors the latest
- * reading into a persistent notification, and raises a fever alert when body temperature
- * crosses the configured threshold.
+ * reading into a persistent notification, and raises warnings/alerts when body temperature
+ * crosses the configured high or low thresholds.
  */
 class MonitorService : LifecycleService() {
 
-    private var feverArmed = true
-    private var lastAlertAtMillis = 0L
+    private val thresholdMonitor = ThresholdMonitor(
+        rearmHysteresisC = REARM_HYSTERESIS_C,
+        cooldownMillis = ALERT_COOLDOWN_MILLIS,
+    )
 
     override fun onCreate() {
         super.onCreate()
@@ -86,7 +91,7 @@ class MonitorService : LifecycleService() {
                 )
 
                 if (settings.alertEnabled) {
-                    checkFever(manager, bodyTempC, settings.alertThresholdC, settings.useFahrenheit)
+                    checkThresholds(manager, bodyTempC, settings)
                 }
             }
         }
@@ -112,24 +117,34 @@ class MonitorService : LifecycleService() {
         }
     }
 
-    private fun checkFever(
+    private fun checkThresholds(
         manager: NotificationManager,
         bodyTempC: Double,
-        thresholdC: Double,
-        fahrenheit: Boolean,
+        settings: AppSettings,
     ) {
-        val now = System.currentTimeMillis()
-        if (bodyTempC >= thresholdC) {
-            if (feverArmed && now - lastAlertAtMillis > ALERT_COOLDOWN_MILLIS) {
-                manager.notify(
-                    Notifications.ALERT_NOTIFICATION_ID,
-                    Notifications.feverNotification(this, TempFormat.format(bodyTempC, fahrenheit)),
-                )
-                lastAlertAtMillis = now
-                feverArmed = false
-            }
-        } else if (bodyTempC <= thresholdC - REARM_HYSTERESIS_C) {
-            feverArmed = true
+        val event = thresholdMonitor.check(bodyTempC, settings.thresholds, System.currentTimeMillis())
+            ?: return
+        val tempText = TempFormat.format(bodyTempC, settings.useFahrenheit)
+        when (event) {
+            TempEvent.HIGH_ALERT -> manager.notify(
+                Notifications.ALERT_NOTIFICATION_ID,
+                Notifications.alertNotification(this, getString(R.string.notif_fever_title), tempText),
+            )
+
+            TempEvent.LOW_ALERT -> manager.notify(
+                Notifications.ALERT_NOTIFICATION_ID,
+                Notifications.alertNotification(this, getString(R.string.notif_low_title), tempText),
+            )
+
+            TempEvent.HIGH_WARNING -> manager.notify(
+                Notifications.WARNING_NOTIFICATION_ID,
+                Notifications.warningNotification(this, getString(R.string.notif_warn_high_title), tempText),
+            )
+
+            TempEvent.LOW_WARNING -> manager.notify(
+                Notifications.WARNING_NOTIFICATION_ID,
+                Notifications.warningNotification(this, getString(R.string.notif_warn_low_title), tempText),
+            )
         }
     }
 
