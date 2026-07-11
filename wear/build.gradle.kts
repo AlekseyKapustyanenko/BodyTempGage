@@ -16,6 +16,12 @@ android {
         targetSdk = 35
         versionCode = 1
         versionName = "1.0"
+
+        ndk {
+            // Wear OS hardware is ARM only; the x86/x86_64 slices exist purely for emulators.
+            // Dropping them roughly halves the APK's native payload.
+            abiFilters += listOf("armeabi-v7a", "arm64-v8a")
+        }
     }
 
     buildTypes {

@@ -3,11 +3,13 @@ package com.bodytempgage.wear.tile
 import androidx.concurrent.futures.CallbackToFutureAdapter
 import androidx.wear.protolayout.ActionBuilders
 import androidx.wear.protolayout.ColorBuilders.argb
+import androidx.wear.protolayout.DeviceParametersBuilders
 import androidx.wear.protolayout.DimensionBuilders
 import androidx.wear.protolayout.LayoutElementBuilders
 import androidx.wear.protolayout.ModifiersBuilders
 import androidx.wear.protolayout.ResourceBuilders
 import androidx.wear.protolayout.TimelineBuilders
+import androidx.wear.protolayout.material.CompactChip
 import androidx.wear.protolayout.material.Text
 import androidx.wear.protolayout.material.Typography
 import androidx.wear.tiles.RequestBuilders
@@ -18,6 +20,7 @@ import com.bodytempgage.common.data.AppSettings
 import com.bodytempgage.core.GaugeReading
 import com.bodytempgage.wear.R
 import com.bodytempgage.wear.WearApp
+import com.bodytempgage.wear.service.MonitorService
 import com.bodytempgage.wear.ui.MainActivity
 import com.google.common.util.concurrent.ListenableFuture
 import kotlinx.coroutines.CoroutineScope
@@ -32,7 +35,8 @@ import kotlinx.coroutines.launch
  * [com.bodytempgage.common.data.ReadingRepository] (fed by the monitoring service's BLE scan),
  * so it costs nothing extra to keep fresh: the monitor service pokes the tile when the values
  * change, and [FRESHNESS_MILLIS] lets the system re-render it while visible. Tapping the tile
- * opens the app.
+ * opens the app; a Start/Stop button pauses or resumes the background scan without leaving the
+ * watch face.
  */
 class TempTileService : TileService() {
 
@@ -43,7 +47,7 @@ class TempTileService : TileService() {
     ): ListenableFuture<TileBuilders.Tile> =
         CallbackToFutureAdapter.getFuture { completer ->
             scope.launch {
-                runCatching { tile() }
+                runCatching { tile(requestParams) }
                     .onSuccess(completer::set)
                     .onFailure(completer::setException)
             }
@@ -63,9 +67,19 @@ class TempTileService : TileService() {
         super.onDestroy()
     }
 
-    private suspend fun tile(): TileBuilders.Tile {
+    private suspend fun tile(requestParams: RequestBuilders.TileRequest): TileBuilders.Tile {
         val container = WearApp.container(this)
-        val settings = container.settings.flow.first()
+        var settings = container.settings.flow.first()
+
+        // Tapping the Start/Stop button re-issues a tile request tagged with its clickable id.
+        // Flip monitoring, start/stop the scanning service, and render the new state right away.
+        if (requestParams.currentState.lastClickableId == CLICK_TOGGLE_MONITOR) {
+            val enabled = !settings.monitoringEnabled
+            container.settings.setMonitoringEnabled(enabled)
+            if (enabled) MonitorService.start(this) else MonitorService.stop(this)
+            settings = settings.copy(monitoringEnabled = enabled)
+        }
+
         // Ignore readings older than the staleness window rather than pinning an outdated value.
         val reading = container.readings.latest.value
             ?.takeIf { System.currentTimeMillis() - it.timestampMillis <= FRESH_MILLIS }
@@ -73,13 +87,18 @@ class TempTileService : TileService() {
         return TileBuilders.Tile.Builder()
             .setResourcesVersion(RESOURCES_VERSION)
             .setFreshnessIntervalMillis(FRESHNESS_MILLIS)
-            .setTileTimeline(TimelineBuilders.Timeline.fromLayoutElement(layout(reading, settings)))
+            .setTileTimeline(
+                TimelineBuilders.Timeline.fromLayoutElement(
+                    layout(reading, settings, requestParams.deviceConfiguration),
+                ),
+            )
             .build()
     }
 
     private fun layout(
         reading: GaugeReading?,
         settings: AppSettings,
+        deviceParameters: DeviceParametersBuilders.DeviceParameters,
     ): LayoutElementBuilders.LayoutElement {
         val column = LayoutElementBuilders.Column.Builder()
             .setHorizontalAlignment(LayoutElementBuilders.HORIZONTAL_ALIGN_CENTER)
@@ -88,7 +107,16 @@ class TempTileService : TileService() {
             column
                 .addContent(text("—", Typography.TYPOGRAPHY_DISPLAY1, COLOR_DEFAULT))
                 .addContent(spacer())
-                .addContent(text(getString(R.string.tile_no_data), Typography.TYPOGRAPHY_CAPTION1, COLOR_DIM))
+                .addContent(
+                    text(
+                        getString(
+                            if (settings.monitoringEnabled) R.string.tile_no_data
+                            else R.string.monitoring_off_hint,
+                        ),
+                        Typography.TYPOGRAPHY_CAPTION1,
+                        COLOR_DIM,
+                    ),
+                )
         } else {
             // Body temperature is the headline ("—" while the gauge is off the body);
             // the skin sensor reading sits below it, smaller.
@@ -119,6 +147,11 @@ class TempTileService : TileService() {
                     ),
                 )
         }
+
+        // Start/Stop button: pauses or resumes the background scan straight from the tile.
+        column
+            .addContent(spacer())
+            .addContent(monitorToggle(settings.monitoringEnabled, deviceParameters))
 
         return LayoutElementBuilders.Box.Builder()
             .setWidth(DimensionBuilders.expand())
@@ -159,6 +192,21 @@ class TempTileService : TileService() {
             .setHeight(DimensionBuilders.dp(4f))
             .build()
 
+    /** Compact "Start"/"Stop" chip whose tap toggles [CLICK_TOGGLE_MONITOR] via a reload. */
+    private fun monitorToggle(
+        monitoringEnabled: Boolean,
+        deviceParameters: DeviceParametersBuilders.DeviceParameters,
+    ): LayoutElementBuilders.LayoutElement =
+        CompactChip.Builder(
+            this,
+            getString(if (monitoringEnabled) R.string.tile_stop else R.string.tile_start),
+            ModifiersBuilders.Clickable.Builder()
+                .setId(CLICK_TOGGLE_MONITOR)
+                .setOnClick(ActionBuilders.LoadAction.Builder().build())
+                .build(),
+            deviceParameters,
+        ).build()
+
     /** Mirrors the main screen: error colour in the alert bands, amber in the warning bands. */
     private fun bodyColor(bodyC: Double, settings: AppSettings): Int = when {
         !settings.alertEnabled -> COLOR_DEFAULT
@@ -170,6 +218,7 @@ class TempTileService : TileService() {
     companion object {
         private const val RESOURCES_VERSION = "1"
         private const val CLICK_OPEN_APP = "open_app"
+        private const val CLICK_TOGGLE_MONITOR = "toggle_monitor"
 
         /** Ask the system to re-render roughly every minute while the tile is visible. */
         private const val FRESHNESS_MILLIS = 60_000L

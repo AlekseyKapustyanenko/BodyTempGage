@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.wear.compose.material.Button
 import androidx.wear.compose.material.MaterialTheme
 import androidx.wear.compose.material.Text
@@ -36,7 +37,9 @@ import com.bodytempgage.wear.R
 import com.bodytempgage.common.ble.BleEngine
 import com.bodytempgage.common.data.AppSettings
 import com.bodytempgage.wear.service.MonitorService
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 
 private object Routes {
     const val MAIN = "main"
@@ -75,8 +78,15 @@ fun WearAppRoot(container: WearContainer) {
         return
     }
 
-    // Keep monitoring (and alerting) alive in the background once permitted.
-    LaunchedEffect(Unit) { MonitorService.start(context) }
+    // Keep monitoring (and alerting) alive in the background while enabled; stop the scan when
+    // the user turns monitoring off. Observed live so the tile/settings toggle takes effect at once.
+    val monitoringEnabled by container.settings.flow
+        .map { it.monitoringEnabled }
+        .distinctUntilChanged()
+        .collectAsStateWithLifecycle(initialValue = true)
+    LaunchedEffect(monitoringEnabled) {
+        if (monitoringEnabled) MonitorService.start(context) else MonitorService.stop(context)
+    }
 
     // Wait once for the first DataStore emission (avoids an empty first frame). Each screen
     // observes the live settings flow itself: nav destination lambdas hold on to their captured
