@@ -107,9 +107,13 @@ fun DevicePickerScreen(
                                     Text("${device.mac} · ${device.rssi} dBm")
                                 },
                                 trailingContent = {
+                                    // Body estimate when worn, otherwise the raw gauge reading.
                                     device.lastReading?.let {
                                         Text(
-                                            TempFormat.format(it.bodyTempC, fahrenheit = false),
+                                            TempFormat.format(
+                                                it.bodyTempC ?: it.gaugeTempC,
+                                                fahrenheit = false,
+                                            ),
                                             style = MaterialTheme.typography.titleMedium,
                                         )
                                     }

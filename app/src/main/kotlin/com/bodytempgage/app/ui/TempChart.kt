@@ -90,6 +90,7 @@ fun TempChart(
         if (fahrenheit) TempFormat.celsiusToFahrenheit(tempC) else tempC
 
     val hasGauge = samples.any { it.gaugeTempC != null }
+    val hasBody = samples.any { it.bodyTempC != null }
     val thresholds = if (settings.alertEnabled) {
         listOf(
             settings.alertHighC to alertColor,
@@ -102,7 +103,7 @@ fun TempChart(
     }
 
     // Y bounds cover both series plus the enabled thresholds, with a little padding.
-    val allValues = samples.map { display(it.bodyTempC) } +
+    val allValues = samples.mapNotNull { s -> s.bodyTempC?.let { display(it) } } +
         samples.mapNotNull { s -> s.gaugeTempC?.let { display(it) } } +
         thresholds.map { display(it.first) }
     val pad = if (fahrenheit) 0.4 else 0.2
@@ -201,11 +202,13 @@ fun TempChart(
                     style = Stroke(1.5.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round),
                 )
             }
-            drawPath(
-                path = seriesPath { it.bodyTempC },
-                color = bodyColor,
-                style = Stroke(2.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round),
-            )
+            if (hasBody) {
+                drawPath(
+                    path = seriesPath { it.bodyTempC },
+                    color = bodyColor,
+                    style = Stroke(2.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round),
+                )
+            }
 
             // X labels: window start and now.
             val startLayout = textMeasurer.measure(
@@ -227,7 +230,9 @@ fun TempChart(
             horizontalArrangement = Arrangement.spacedBy(16.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            LegendItem(bodyColor, stringResource(R.string.mode_body))
+            if (hasBody) {
+                LegendItem(bodyColor, stringResource(R.string.mode_body))
+            }
             if (hasGauge) {
                 LegendItem(gaugeColor, stringResource(R.string.mode_gauge))
             }

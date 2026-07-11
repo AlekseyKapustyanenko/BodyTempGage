@@ -23,7 +23,8 @@ data class LiveBodyTemp(
 /** One point of the temperature history shown in the chart. */
 data class TempSample(
     val timestampMillis: Long,
-    val bodyTempC: Double,
+    /** Null while the gauge was off the body (no valid estimate). */
+    val bodyTempC: Double?,
     val gaugeTempC: Double?,
 )
 
@@ -95,7 +96,7 @@ class ReadingRepository {
         _history.value = emptyList()
     }
 
-    private fun recordSample(timestampMillis: Long, bodyTempC: Double, gaugeTempC: Double?) {
+    private fun recordSample(timestampMillis: Long, bodyTempC: Double?, gaugeTempC: Double?) {
         val samples = _history.value
         val last = samples.lastOrNull()
         if (last != null && timestampMillis - last.timestampMillis < MIN_SAMPLE_INTERVAL_MILLIS) return

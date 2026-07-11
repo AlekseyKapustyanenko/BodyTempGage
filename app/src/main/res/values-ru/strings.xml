@@ -61,6 +61,7 @@
     <string name="source_device">с устройства</string>
     <string name="detail_estimate">Оценка (по формуле)</string>
     <string name="warmup_hint">После надевания датчика показания стабилизируются примерно за 5 минут.</string>
+    <string name="not_worn_hint">Датчик не на теле — температура тела появится, когда он нагреется на коже.</string>
 
     <!-- Notifications -->
     <string name="notif_channel_status">Статус мониторинга</string>
@@ -70,6 +71,7 @@
     <string name="notif_waiting">Ожидание сигнала от термометра…</string>
     <string name="notif_status_text">Тело %1$s · Датчик %2$s · Батарея %3$d%%</string>
     <string name="notif_status_body_only">Тело %1$s</string>
+    <string name="notif_status_gauge_only">Датчик %1$s · Батарея %2$d%% · не на теле</string>
     <string name="notif_fever_title">Высокая температура!</string>
     <string name="notif_low_title">Низкая температура!</string>
     <string name="notif_warn_high_title">Повышенная температура</string>
