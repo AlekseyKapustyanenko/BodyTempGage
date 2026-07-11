@@ -93,6 +93,14 @@ fun SettingsScreen(
                     checked = settings.alertEnabled,
                     onCheckedChange = { scope.launch { container.settings.setAlertEnabled(it) } },
                     label = { Text(stringResource(R.string.fever_alert)) },
+                    secondaryLabel = {
+                        Text(
+                            stringResource(
+                                if (settings.alertEnabled) R.string.alert_on_hint
+                                else R.string.alert_off_hint,
+                            ),
+                        )
+                    },
                     toggleControl = {
                         androidx.wear.compose.material.Icon(
                             imageVector = ToggleChipDefaults.switchIcon(settings.alertEnabled),

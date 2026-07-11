@@ -80,6 +80,14 @@ class TempTileService : TileService() {
             settings = settings.copy(monitoringEnabled = enabled)
         }
 
+        // Tapping the alerts button flips whether threshold crossings raise notifications,
+        // without touching the background scan. Same reload-on-tap mechanism as the monitor toggle.
+        if (requestParams.currentState.lastClickableId == CLICK_TOGGLE_ALERT) {
+            val enabled = !settings.alertEnabled
+            container.settings.setAlertEnabled(enabled)
+            settings = settings.copy(alertEnabled = enabled)
+        }
+
         // Ignore readings older than the staleness window rather than pinning an outdated value.
         val reading = container.readings.latest.value
             ?.takeIf { System.currentTimeMillis() - it.timestampMillis <= FRESH_MILLIS }
@@ -149,9 +157,12 @@ class TempTileService : TileService() {
         }
 
         // Start/Stop button: pauses or resumes the background scan straight from the tile.
+        // Alerts button: enables/disables temperature-threshold notifications from the tile.
         column
             .addContent(spacer())
             .addContent(monitorToggle(settings.monitoringEnabled, deviceParameters))
+            .addContent(spacer())
+            .addContent(alertToggle(settings.alertEnabled, deviceParameters))
 
         return LayoutElementBuilders.Box.Builder()
             .setWidth(DimensionBuilders.expand())
@@ -207,6 +218,21 @@ class TempTileService : TileService() {
             deviceParameters,
         ).build()
 
+    /** Compact alerts on/off chip whose tap toggles [CLICK_TOGGLE_ALERT] via a reload. */
+    private fun alertToggle(
+        alertEnabled: Boolean,
+        deviceParameters: DeviceParametersBuilders.DeviceParameters,
+    ): LayoutElementBuilders.LayoutElement =
+        CompactChip.Builder(
+            this,
+            getString(if (alertEnabled) R.string.tile_alerts_off else R.string.tile_alerts_on),
+            ModifiersBuilders.Clickable.Builder()
+                .setId(CLICK_TOGGLE_ALERT)
+                .setOnClick(ActionBuilders.LoadAction.Builder().build())
+                .build(),
+            deviceParameters,
+        ).build()
+
     /** Mirrors the main screen: error colour in the alert bands, amber in the warning bands. */
     private fun bodyColor(bodyC: Double, settings: AppSettings): Int = when {
         !settings.alertEnabled -> COLOR_DEFAULT
@@ -219,6 +245,7 @@ class TempTileService : TileService() {
         private const val RESOURCES_VERSION = "1"
         private const val CLICK_OPEN_APP = "open_app"
         private const val CLICK_TOGGLE_MONITOR = "toggle_monitor"
+        private const val CLICK_TOGGLE_ALERT = "toggle_alert"
 
         /** Ask the system to re-render roughly every minute while the tile is visible. */
         private const val FRESHNESS_MILLIS = 60_000L

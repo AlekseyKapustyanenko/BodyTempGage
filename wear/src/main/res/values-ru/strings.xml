@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">BodyTempGage</string>
+
+    <!-- Display modes -->
+    <string name="mode_gauge">Датчик</string>
+    <string name="mode_body">Тело</string>
+    <string name="mode_both">Оба</string>
+    <string name="label_gauge_temp">Датчик (кожа)</string>
+    <string name="label_body_temp">Тело</string>
+
+    <!-- Main screen -->
+    <string name="battery">Батарея %1$d%%</string>
+    <string name="searching">Поиск термометра…</string>
+    <string name="bluetooth_off">Bluetooth выключен</string>
+    <string name="scan_failed">Ошибка сканирования — переключите Bluetooth</string>
+    <string name="not_worn_hint">Датчик не на теле</string>
+    <string name="open_settings">Настройки</string>
+
+    <!-- Device picker -->
+    <string name="select_device_title">Выберите термометр</string>
+    <string name="scanning_hint">Поиск поблизости…</string>
+    <string name="picker_empty">Пока ничего не найдено. Убедитесь, что термометр рядом.</string>
+    <string name="change_device">Сменить устройство</string>
+
+    <!-- Settings -->
+    <string name="settings">Настройки</string>
+    <string name="unit_fahrenheit">Фаренгейты (°F)</string>
+    <string name="monitoring_toggle">Мониторинг</string>
+    <string name="monitoring_on_hint">Сканирование в фоне</string>
+    <string name="monitoring_off_hint">Мониторинг приостановлен</string>
+    <string name="fever_alert">Оповещения о температуре</string>
+    <string name="alert_on_hint">Оповещать при выходе за пороги</string>
+    <string name="alert_off_hint">Оповещения выключены</string>
+    <string name="alert_threshold_high">Тревога: высокая</string>
+    <string name="warn_threshold_high">Предупреждение: высокая</string>
+    <string name="warn_threshold_low">Предупреждение: низкая</string>
+    <string name="alert_threshold_low">Тревога: низкая</string>
+    <string name="display_mode">Отображение</string>
+    <string name="decrease">Уменьшить</string>
+    <string name="increase">Увеличить</string>
+
+    <!-- Permissions -->
+    <string name="permissions_title">Нужно разрешение Bluetooth</string>
+    <string name="permissions_text">Часы ищут термометр через Bluetooth LE.</string>
+    <string name="grant">Дать разрешение</string>
+
+    <!-- Tile -->
+    <string name="tile_label">Температура</string>
+    <string name="tile_no_data">Нет свежих данных</string>
+    <string name="tile_start">Старт</string>
+    <string name="tile_stop">Стоп</string>
+    <string name="tile_alerts_on">Опов. вкл.</string>
+    <string name="tile_alerts_off">Опов. выкл.</string>
+
+    <!-- Watch-face complication -->
+    <string name="complication_label">Температура тела</string>
+
+    <!-- Notifications -->
+    <string name="notif_channel_status">Статус мониторинга</string>
+    <string name="notif_channel_alerts">Оповещения о температуре</string>
+    <string name="notif_channel_warnings">Предупреждения о температуре</string>
+    <string name="notif_monitoring_title">Мониторинг температуры</string>
+    <string name="notif_waiting">Ожидание сигнала…</string>
+    <string name="notif_status_text">Тело %1$s · Датчик %2$s · %3$d%%</string>
+    <string name="notif_status_body_only">Тело %1$s</string>
+    <string name="notif_status_gauge_only">Датчик %1$s · %2$d%% · не на теле</string>
+    <string name="notif_fever_title">Высокая температура!</string>
+    <string name="notif_low_title">Низкая температура!</string>
+    <string name="notif_warn_high_title">Повышенная температура</string>
+    <string name="notif_warn_low_title">Пониженная температура</string>
+    <string name="notif_temp_text">Температура тела %1$s</string>
+</resources>
