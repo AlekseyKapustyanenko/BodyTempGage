@@ -94,45 +94,61 @@ fun SettingsScreen(
                     )
                     if (settings.alertEnabled) {
                         HorizontalDivider()
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Text(
-                                text = stringResource(R.string.alert_threshold),
-                                style = MaterialTheme.typography.bodyLarge,
-                                modifier = Modifier.weight(1f),
-                            )
-                            IconButton(
-                                onClick = {
-                                    scope.launch {
-                                        container.settings.setAlertThresholdC(
-                                            (settings.alertThresholdC - 0.1).coerceAtLeast(36.0),
-                                        )
-                                    }
-                                },
-                            ) {
-                                Icon(Icons.Filled.Remove, contentDescription = null)
-                            }
-                            Text(
-                                text = TempFormat.formatThreshold(
-                                    settings.alertThresholdC,
-                                    settings.useFahrenheit,
-                                ),
-                                style = MaterialTheme.typography.titleMedium,
-                            )
-                            IconButton(
-                                onClick = {
-                                    scope.launch {
-                                        container.settings.setAlertThresholdC(
-                                            (settings.alertThresholdC + 0.1).coerceAtMost(41.0),
-                                        )
-                                    }
-                                },
-                            ) {
-                                Icon(Icons.Filled.Add, contentDescription = null)
-                            }
-                        }
+                        // Thresholds keep the order alertLow < warnLow < warnHigh < alertHigh.
+                        ThresholdRow(
+                            label = stringResource(R.string.alert_threshold_high),
+                            valueText = TempFormat.formatThreshold(settings.alertHighC, settings.useFahrenheit),
+                            onStep = { delta ->
+                                scope.launch {
+                                    container.settings.setAlertHighC(
+                                        stepThreshold(settings.alertHighC, delta, settings.warnHighC + 0.1, 43.0),
+                                    )
+                                }
+                            },
+                        )
+                        ThresholdRow(
+                            label = stringResource(R.string.warn_threshold_high),
+                            valueText = TempFormat.formatThreshold(settings.warnHighC, settings.useFahrenheit),
+                            onStep = { delta ->
+                                scope.launch {
+                                    container.settings.setWarnHighC(
+                                        stepThreshold(
+                                            settings.warnHighC,
+                                            delta,
+                                            settings.warnLowC + 0.1,
+                                            settings.alertHighC - 0.1,
+                                        ),
+                                    )
+                                }
+                            },
+                        )
+                        ThresholdRow(
+                            label = stringResource(R.string.warn_threshold_low),
+                            valueText = TempFormat.formatThreshold(settings.warnLowC, settings.useFahrenheit),
+                            onStep = { delta ->
+                                scope.launch {
+                                    container.settings.setWarnLowC(
+                                        stepThreshold(
+                                            settings.warnLowC,
+                                            delta,
+                                            settings.alertLowC + 0.1,
+                                            settings.warnHighC - 0.1,
+                                        ),
+                                    )
+                                }
+                            },
+                        )
+                        ThresholdRow(
+                            label = stringResource(R.string.alert_threshold_low),
+                            valueText = TempFormat.formatThreshold(settings.alertLowC, settings.useFahrenheit),
+                            onStep = { delta ->
+                                scope.launch {
+                                    container.settings.setAlertLowC(
+                                        stepThreshold(settings.alertLowC, delta, 30.0, settings.warnLowC - 0.1),
+                                    )
+                                }
+                            },
+                        )
                     }
                 }
             }
@@ -174,6 +190,38 @@ fun SettingsScreen(
                     )
                 }
             }
+        }
+    }
+}
+
+/** One 0.1 °C step within [min]..[max], rounded so repeated steps don't drift. */
+private fun stepThreshold(current: Double, delta: Double, min: Double, max: Double): Double =
+    kotlin.math.round((current + delta).coerceIn(min, max) * 10) / 10.0
+
+@Composable
+private fun ThresholdRow(
+    label: String,
+    valueText: String,
+    onStep: (Double) -> Unit,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodyLarge,
+            modifier = Modifier.weight(1f),
+        )
+        IconButton(onClick = { onStep(-0.1) }) {
+            Icon(Icons.Filled.Remove, contentDescription = null)
+        }
+        Text(
+            text = valueText,
+            style = MaterialTheme.typography.titleMedium,
+        )
+        IconButton(onClick = { onStep(0.1) }) {
+            Icon(Icons.Filled.Add, contentDescription = null)
         }
     }
 }

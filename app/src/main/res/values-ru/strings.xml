@@ -33,9 +33,12 @@
     <string name="settings">Настройки</string>
     <string name="back">Назад</string>
     <string name="unit_fahrenheit">Показывать температуру в Фаренгейтах (°F)</string>
-    <string name="fever_alert">Оповещение о жаре</string>
-    <string name="fever_alert_desc">Уведомлять, когда температура тела достигает порога</string>
-    <string name="alert_threshold">Порог оповещения</string>
+    <string name="fever_alert">Оповещения о температуре</string>
+    <string name="fever_alert_desc">Уведомлять, когда температура тела выходит за пороги</string>
+    <string name="alert_threshold_high">Тревога: высокая</string>
+    <string name="warn_threshold_high">Предупреждение: высокая</string>
+    <string name="warn_threshold_low">Предупреждение: низкая</string>
+    <string name="alert_threshold_low">Тревога: низкая</string>
     <string name="change_device">Сменить устройство</string>
     <string name="about_title">О приложении</string>
     <string name="about_text">Считывает показания термометров Xiaomi Miaomiaoce MMC-T201 через Bluetooth LE без сопряжения. Температура тела рассчитывается по двум встроенным датчикам по формуле сообщества из ble_monitor для Home Assistant (issue #264).</string>
@@ -61,11 +64,19 @@
 
     <!-- Notifications -->
     <string name="notif_channel_status">Статус мониторинга</string>
-    <string name="notif_channel_alerts">Оповещения о жаре</string>
+    <string name="notif_channel_alerts">Оповещения о температуре</string>
+    <string name="notif_channel_warnings">Предупреждения о температуре</string>
     <string name="notif_monitoring_title">Мониторинг температуры</string>
     <string name="notif_waiting">Ожидание сигнала от термометра…</string>
     <string name="notif_status_text">Тело %1$s · Датчик %2$s · Батарея %3$d%%</string>
     <string name="notif_status_body_only">Тело %1$s</string>
     <string name="notif_fever_title">Высокая температура!</string>
-    <string name="notif_fever_text">Температура тела %1$s</string>
+    <string name="notif_low_title">Низкая температура!</string>
+    <string name="notif_warn_high_title">Повышенная температура</string>
+    <string name="notif_warn_low_title">Пониженная температура</string>
+    <string name="notif_temp_text">Температура тела %1$s</string>
+
+    <!-- Chart -->
+    <string name="chart_title">История</string>
+    <string name="chart_empty">Сбор данных — график появится после нескольких измерений.</string>
 </resources>

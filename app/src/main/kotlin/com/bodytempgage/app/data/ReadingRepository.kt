@@ -20,6 +20,13 @@ data class LiveBodyTemp(
     val timestampMillis: Long,
 )
 
+/** One point of the temperature history shown in the chart. */
+data class TempSample(
+    val timestampMillis: Long,
+    val bodyTempC: Double,
+    val gaugeTempC: Double?,
+)
+
 /**
  * In-memory hub for decoded advertisements and GATT notifications. Fed by
  * [com.bodytempgage.app.ble.BleEngine] and [com.bodytempgage.app.ble.GattClient],
@@ -43,13 +50,19 @@ class ReadingRepository {
     private val _liveBodyTemp = MutableStateFlow<LiveBodyTemp?>(null)
     val liveBodyTemp: StateFlow<LiveBodyTemp?> = _liveBodyTemp.asStateFlow()
 
+    /** Rolling temperature history of the selected device, oldest first. */
+    private val _history = MutableStateFlow<List<TempSample>>(emptyList())
+    val history: StateFlow<List<TempSample>> = _history.asStateFlow()
+
     fun reportLiveBodyTemp(tempC: Double, timestampMillis: Long) {
         _liveBodyTemp.value = LiveBodyTemp(tempC, timestampMillis)
+        recordSample(timestampMillis, tempC, gaugeTempC = _latest.value?.gaugeTempC)
     }
 
     /** A reading received over GATT — always from the selected (connected) device. */
     fun reportSelected(reading: GaugeReading) {
         _latest.value = reading
+        recordSample(reading.timestampMillis, reading.bodyTempC, reading.gaugeTempC)
     }
 
     fun clearLiveBodyTemp() {
@@ -70,6 +83,7 @@ class ReadingRepository {
         if (selected == null || selected.equals(mac, ignoreCase = true)) {
             _latest.value = reading
             _latestRssi.value = rssi
+            recordSample(reading.timestampMillis, reading.bodyTempC, reading.gaugeTempC)
         }
     }
 
@@ -78,5 +92,20 @@ class ReadingRepository {
         _latest.value = null
         _latestRssi.value = null
         _liveBodyTemp.value = null
+        _history.value = emptyList()
+    }
+
+    private fun recordSample(timestampMillis: Long, bodyTempC: Double, gaugeTempC: Double?) {
+        val samples = _history.value
+        val last = samples.lastOrNull()
+        if (last != null && timestampMillis - last.timestampMillis < MIN_SAMPLE_INTERVAL_MILLIS) return
+        val cutoff = timestampMillis - HISTORY_WINDOW_MILLIS
+        _history.value = samples.dropWhile { it.timestampMillis < cutoff } +
+            TempSample(timestampMillis, bodyTempC, gaugeTempC)
+    }
+
+    private companion object {
+        const val MIN_SAMPLE_INTERVAL_MILLIS = 15_000L
+        const val HISTORY_WINDOW_MILLIS = 12 * 60 * 60_000L
     }
 }

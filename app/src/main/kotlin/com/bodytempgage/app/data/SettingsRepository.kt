@@ -6,6 +6,7 @@ import androidx.datastore.preferences.core.doublePreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import com.bodytempgage.core.AlertThresholds
 import com.bodytempgage.core.DisplayMode
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -18,10 +19,25 @@ data class AppSettings(
     val displayMode: DisplayMode = DisplayMode.BODY,
     val useFahrenheit: Boolean = false,
     val alertEnabled: Boolean = true,
-    val alertThresholdC: Double = 37.5,
+    /** High alert: fever. */
+    val alertHighC: Double = 37.5,
+    /** High warning: elevated, below the alert threshold. */
+    val warnHighC: Double = 37.0,
+    /** Low warning: lowered, above the low alert threshold. */
+    val warnLowC: Double = 35.5,
+    /** Low alert: hypothermia risk. */
+    val alertLowC: Double = 35.0,
     /** User asked for a GATT connection to the gauge (exact device-computed reading). */
     val gattRequested: Boolean = false,
-)
+) {
+    val thresholds: AlertThresholds
+        get() = AlertThresholds(
+            alertHighC = alertHighC,
+            warnHighC = warnHighC,
+            warnLowC = warnLowC,
+            alertLowC = alertLowC,
+        )
+}
 
 class SettingsRepository(private val context: Context) {
 
@@ -31,7 +47,12 @@ class SettingsRepository(private val context: Context) {
         val displayMode = stringPreferencesKey("display_mode")
         val useFahrenheit = booleanPreferencesKey("use_fahrenheit")
         val alertEnabled = booleanPreferencesKey("alert_enabled")
-        val alertThresholdC = doublePreferencesKey("alert_threshold_c")
+
+        // The high-alert key predates the other thresholds, hence the generic name.
+        val alertHighC = doublePreferencesKey("alert_threshold_c")
+        val warnHighC = doublePreferencesKey("warn_high_c")
+        val warnLowC = doublePreferencesKey("warn_low_c")
+        val alertLowC = doublePreferencesKey("alert_low_c")
         val gattRequested = booleanPreferencesKey("gatt_requested")
     }
 
@@ -44,7 +65,10 @@ class SettingsRepository(private val context: Context) {
                 ?: DisplayMode.BODY,
             useFahrenheit = p[Keys.useFahrenheit] ?: false,
             alertEnabled = p[Keys.alertEnabled] ?: true,
-            alertThresholdC = p[Keys.alertThresholdC] ?: 37.5,
+            alertHighC = p[Keys.alertHighC] ?: 37.5,
+            warnHighC = p[Keys.warnHighC] ?: 37.0,
+            warnLowC = p[Keys.warnLowC] ?: 35.5,
+            alertLowC = p[Keys.alertLowC] ?: 35.0,
             gattRequested = p[Keys.gattRequested] ?: false,
         )
     }
@@ -75,8 +99,20 @@ class SettingsRepository(private val context: Context) {
         context.dataStore.edit { it[Keys.alertEnabled] = value }
     }
 
-    suspend fun setAlertThresholdC(value: Double) {
-        context.dataStore.edit { it[Keys.alertThresholdC] = value }
+    suspend fun setAlertHighC(value: Double) {
+        context.dataStore.edit { it[Keys.alertHighC] = value }
+    }
+
+    suspend fun setWarnHighC(value: Double) {
+        context.dataStore.edit { it[Keys.warnHighC] = value }
+    }
+
+    suspend fun setWarnLowC(value: Double) {
+        context.dataStore.edit { it[Keys.warnLowC] = value }
+    }
+
+    suspend fun setAlertLowC(value: Double) {
+        context.dataStore.edit { it[Keys.alertLowC] = value }
     }
 
     suspend fun setGattRequested(value: Boolean) {
