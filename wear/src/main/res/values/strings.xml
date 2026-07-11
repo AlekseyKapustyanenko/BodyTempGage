@@ -40,6 +40,13 @@
     <string name="permissions_text">The watch scans for your thermometer over Bluetooth LE.</string>
     <string name="grant">Grant</string>
 
+    <!-- Tile -->
+    <string name="tile_label">Temperature</string>
+    <string name="tile_no_data">No recent data</string>
+
+    <!-- Watch-face complication -->
+    <string name="complication_label">Body temperature</string>
+
     <!-- Notifications -->
     <string name="notif_channel_status">Monitoring status</string>
     <string name="notif_channel_alerts">Temperature alerts</string>

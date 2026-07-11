@@ -63,4 +63,10 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.lifecycle.service)
     implementation(libs.kotlinx.coroutines.android)
+
+    implementation(libs.androidx.wear.tiles)
+    implementation(libs.androidx.wear.protolayout)
+    implementation(libs.androidx.wear.protolayout.material)
+    implementation(libs.androidx.concurrent.futures)
+    implementation(libs.androidx.watchface.complications.data.source.ktx)
 }
