@@ -3,7 +3,6 @@ package com.bodytempgage.app
 import android.app.Application
 import android.content.Context
 import com.bodytempgage.common.ble.BleEngine
-import com.bodytempgage.common.ble.GattClient
 import com.bodytempgage.common.data.ReadingRepository
 import com.bodytempgage.common.data.SettingsRepository
 import com.bodytempgage.common.sync.SettingsSync
@@ -17,7 +16,6 @@ class AppContainer(context: Context) {
     val settings = SettingsRepository(context)
     val readings = ReadingRepository()
     val bleEngine = BleEngine(context, readings)
-    val gattClient = GattClient(context, readings)
 
     /** Mirrors settings changes to/from the paired Wear OS watch over the Data Layer. */
     val settingsSync = SettingsSync(context, settings)

@@ -29,6 +29,9 @@
     <string name="monitoring_toggle">Мониторинг</string>
     <string name="monitoring_on_hint">Сканирование в фоне</string>
     <string name="monitoring_off_hint">Мониторинг приостановлен</string>
+    <string name="auto_disable_label">Отключать без данных</string>
+    <string name="auto_disable_minutes">%1$d мин</string>
+    <string name="auto_disable_off">Выкл</string>
     <string name="fever_alert">Оповещения о температуре</string>
     <string name="alert_on_hint">Оповещать при выходе за пороги</string>
     <string name="alert_off_hint">Оповещения выключены</string>

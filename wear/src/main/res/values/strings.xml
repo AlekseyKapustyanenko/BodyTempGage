@@ -29,6 +29,9 @@
     <string name="monitoring_toggle">Monitoring</string>
     <string name="monitoring_on_hint">Scanning in the background</string>
     <string name="monitoring_off_hint">Monitoring paused</string>
+    <string name="auto_disable_label">Stop after no data</string>
+    <string name="auto_disable_minutes">%1$d min</string>
+    <string name="auto_disable_off">Off</string>
     <string name="fever_alert">Temperature alerts</string>
     <string name="alert_on_hint">Warn on threshold crossings</string>
     <string name="alert_off_hint">Temperature alerts off</string>

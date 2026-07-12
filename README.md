@@ -23,25 +23,18 @@ body = 3.71934e-11 * exp(0.69314 * temp1) - 1.02801e-8 * exp(0.53871 * temp2) + 
 ```
 
 The gauge never transmits a computed body temperature: the official app calculates it
-on the phone from this same sensor pair. Besides advertisements, the app can optionally
-**connect** (a button on the main screen) to the Health Thermometer service (`0x1809`).
-The MMC-T201-2's Intermediate Temperature characteristic (`0x2A1E`) does not follow the
-Bluetooth spec — instead of an IEEE-11073 float it streams
-`status (1) | int16 temp1 | int16 temp2 | uint8 battery` every ~2 seconds (captured from
-real hardware, e.g. `00 840d 5c0d 61` = 34.60 °C / 34.20 °C / 97 %). While connected the
-readings update every ~2 s instead of the advertisement cadence. Only one central can
-connect at a time — the official app and this one can't be connected simultaneously.
+on the phone from this same sensor pair. Both apps read the gauge purely from its BLE
+advertisements — no pairing or GATT connection is required.
 
 The parsers and decoders live in the pure-Kotlin `:core` module and are covered by unit
-tests with real captures (advertisement from issue #264, GATT notification from an
-MMC-T201-2).
+tests with real captures (advertisement from issue #264).
 
 ## Project structure
 
 | Module            | Contents |
 |-------------------|----------|
 | `:core`           | Pure JVM Kotlin: MiBeacon parser, T201 decoder, threshold state machine, settings-sync snapshot/merge policy, models. No Android dependencies. |
-| `:common-android` | Shared Android library used by both apps: BLE scan (`BleEngine`), GATT client, in-memory reading hub, DataStore settings, and phone↔watch settings sync over the Wearable Data Layer. |
+| `:common-android` | Shared Android library used by both apps: BLE scan (`BleEngine`), in-memory reading hub, DataStore settings, and phone↔watch settings sync over the Wearable Data Layer. |
 | `:app`            | Phone app: Jetpack Compose UI, BLE scanning, foreground monitoring service, fever alerts. |
 | `:wear`           | **Wear OS companion**: Compose-for-Wear UI, its own BLE advertisement scan and monitoring service, local alerts, and settings sync with the phone. |
 
@@ -51,7 +44,9 @@ The watch app reads the thermometer **directly** over BLE advertisements (it doe
 through the phone), shows the same temperatures, and raises the same fever / low-temperature
 alerts. Alarm thresholds, the selected gauge, display mode, °F and alerts-on/off are **synced
 both ways** with the phone over the Wearable Data Layer — change them on either device and the
-other follows (last-write-wins). The Wear app installs and runs standalone (declared
+other follows (last-write-wins). To spare the watch battery, background monitoring
+**auto-disables** after a configurable number of minutes with no reading from the gauge
+(default 5 minutes, or *Off* to never auto-disable) — set it in the watch's Settings. The Wear app installs and runs standalone (declared
 `com.google.android.wearable.standalone`); it shares the phone's `applicationId`
 (`com.bodytempgage`) and signing key, which the Data Layer requires for pairing. Build it with
 `./gradlew :wear:assembleDebug` (APK at `wear/build/outputs/apk/debug/`).

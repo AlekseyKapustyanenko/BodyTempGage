@@ -26,6 +26,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.sample
 import kotlinx.coroutines.launch
 
@@ -54,6 +55,7 @@ class MonitorService : LifecycleService() {
         container.bleEngine.start(BleEngine.Client.SERVICE)
         _isRunning.value = true
 
+        val startMillis = System.currentTimeMillis()
         val manager = getSystemService(NotificationManager::class.java)
 
         // Advertisements arrive several times a second; posting a Wear notification that often
@@ -102,12 +104,15 @@ class MonitorService : LifecycleService() {
                 }
         }
 
-        // Flag stale data in the notification when the gauge disappears.
+        // Flag stale data in the notification when the gauge disappears, and auto-disable
+        // monitoring entirely once the gauge has been silent for the user-configured number of
+        // minutes so a watch that's wandered out of range doesn't scan (and drain) all day.
         lifecycleScope.launch(Dispatchers.Default) {
             while (true) {
-                delay(60_000)
-                val last = container.readings.latest.value?.timestampMillis ?: 0L
-                if (System.currentTimeMillis() - last > STALE_AFTER_MILLIS) {
+                delay(STALE_CHECK_MILLIS)
+                val lastReading = container.readings.latest.value?.timestampMillis ?: 0L
+                val now = System.currentTimeMillis()
+                if (now - lastReading > STALE_AFTER_MILLIS) {
                     manager.notify(
                         Notifications.STATUS_NOTIFICATION_ID,
                         Notifications.statusNotification(
@@ -115,6 +120,18 @@ class MonitorService : LifecycleService() {
                             getString(R.string.notif_waiting),
                         ),
                     )
+                }
+
+                val autoDisableMinutes = container.settings.flow.first().autoDisableMinutes
+                if (autoDisableMinutes > 0) {
+                    // Count silence from service start so a stale reading from a previous run
+                    // can't trip the timer the moment monitoring turns back on.
+                    val lastData = maxOf(startMillis, lastReading)
+                    if (now - lastData >= autoDisableMinutes * 60_000L) {
+                        container.settings.setMonitoringEnabled(false)
+                        stopSelf()
+                        break
+                    }
                 }
             }
         }
@@ -159,6 +176,9 @@ class MonitorService : LifecycleService() {
 
     companion object {
         private const val STALE_AFTER_MILLIS = 5 * 60_000L
+
+        /** Cadence of the stale-data / auto-disable check. */
+        private const val STALE_CHECK_MILLIS = 30_000L
         private const val ALERT_COOLDOWN_MILLIS = 5 * 60_000L
         private const val REARM_HYSTERESIS_C = 0.2
 
