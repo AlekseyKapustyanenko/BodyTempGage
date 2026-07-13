@@ -54,6 +54,8 @@ class MonitorService : LifecycleService() {
         )
         container.bleEngine.start(BleEngine.Client.SERVICE)
         _isRunning.value = true
+        // Monitoring just turned on: refresh the tile so its Monitor toggle shows "On".
+        refreshTile()
 
         val startMillis = System.currentTimeMillis()
         val manager = getSystemService(NotificationManager::class.java)
@@ -92,8 +94,7 @@ class MonitorService : LifecycleService() {
                             Notifications.statusNotification(this@MonitorService, text),
                         )
                         // Keep the temperature tile and watch-face complication in step.
-                        TileService.getUpdater(this@MonitorService)
-                            .requestUpdate(TempTileService::class.java)
+                        refreshTile()
                         ComplicationDataSourceUpdateRequester.create(
                             applicationContext,
                             ComponentName(this@MonitorService, TempComplicationService::class.java),
@@ -182,7 +183,17 @@ class MonitorService : LifecycleService() {
     override fun onDestroy() {
         WearApp.container(this).bleEngine.stop(BleEngine.Client.SERVICE)
         _isRunning.value = false
+        // Monitoring stopped (settings toggle, phone/app, or auto-disable): refresh the tile so
+        // its Monitor toggle drops back to "Off" instead of showing stale "On".
+        refreshTile()
         super.onDestroy()
+    }
+
+    /** Ask the system to re-render the temperature tile so it reflects the latest state. */
+    private fun refreshTile() {
+        runCatching {
+            TileService.getUpdater(this).requestUpdate(TempTileService::class.java)
+        }
     }
 
     companion object {
