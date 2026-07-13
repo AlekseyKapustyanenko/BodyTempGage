@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.doublePreferencesKey
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.bodytempgage.core.AlertThresholds
@@ -28,15 +29,18 @@ data class AppSettings(
     val warnLowC: Double = 35.5,
     /** Low alert: hypothermia risk. */
     val alertLowC: Double = 35.0,
-    /** User asked for a GATT connection to the gauge (exact device-computed reading). */
-    val gattRequested: Boolean = false,
     /**
      * Background monitoring is on: the foreground service keeps the BLE scan alive with the app
-     * closed. Turning it off stops the scan (and the service) to save battery. Device-local, like
-     * [gattRequested] — each device runs its own scan, so this must not follow the user across
-     * devices.
+     * closed. Turning it off stops the scan (and the service) to save battery. Device-local —
+     * each device runs its own scan, so this must not follow the user across devices.
      */
     val monitoringEnabled: Boolean = true,
+    /**
+     * Wear only: minutes without any reading after which background monitoring auto-disables to
+     * save battery (the watch stops scanning once the gauge is clearly out of range or off). `0`
+     * turns the auto-disable off. Device-local, like [monitoringEnabled].
+     */
+    val autoDisableMinutes: Int = DEFAULT_AUTO_DISABLE_MINUTES,
 ) {
     val thresholds: AlertThresholds
         get() = AlertThresholds(
@@ -45,6 +49,10 @@ data class AppSettings(
             warnLowC = warnLowC,
             alertLowC = alertLowC,
         )
+
+    companion object {
+        const val DEFAULT_AUTO_DISABLE_MINUTES = 5
+    }
 }
 
 class SettingsRepository(private val context: Context) {
@@ -61,8 +69,8 @@ class SettingsRepository(private val context: Context) {
         val warnHighC = doublePreferencesKey("warn_high_c")
         val warnLowC = doublePreferencesKey("warn_low_c")
         val alertLowC = doublePreferencesKey("alert_low_c")
-        val gattRequested = booleanPreferencesKey("gatt_requested")
         val monitoringEnabled = booleanPreferencesKey("monitoring_enabled")
+        val autoDisableMinutes = intPreferencesKey("auto_disable_minutes")
     }
 
     val flow: Flow<AppSettings> = context.dataStore.data.map { p ->
@@ -78,8 +86,8 @@ class SettingsRepository(private val context: Context) {
             warnHighC = p[Keys.warnHighC] ?: 37.0,
             warnLowC = p[Keys.warnLowC] ?: 35.5,
             alertLowC = p[Keys.alertLowC] ?: 35.0,
-            gattRequested = p[Keys.gattRequested] ?: false,
             monitoringEnabled = p[Keys.monitoringEnabled] ?: true,
+            autoDisableMinutes = p[Keys.autoDisableMinutes] ?: AppSettings.DEFAULT_AUTO_DISABLE_MINUTES,
         )
     }
 
@@ -125,8 +133,8 @@ class SettingsRepository(private val context: Context) {
         context.dataStore.edit { it[Keys.alertLowC] = value }
     }
 
-    suspend fun setGattRequested(value: Boolean) {
-        context.dataStore.edit { it[Keys.gattRequested] = value }
+    suspend fun setAutoDisableMinutes(value: Int) {
+        context.dataStore.edit { it[Keys.autoDisableMinutes] = value }
     }
 
     suspend fun setMonitoringEnabled(value: Boolean) {
@@ -135,8 +143,9 @@ class SettingsRepository(private val context: Context) {
 
     /**
      * Writes every synced field of [snapshot] in a single transaction (one emission), used when
-     * applying a settings change received from the paired device. [SettingsSnapshot.updatedAt]
-     * and the device-local `gattRequested` flag are intentionally not persisted.
+     * applying a settings change received from the paired device. [SettingsSnapshot.updatedAt] and
+     * the device-local flags (`monitoringEnabled`, `autoDisableMinutes`) are intentionally not
+     * persisted.
      */
     suspend fun applySyncedSnapshot(snapshot: SettingsSnapshot) {
         context.dataStore.edit { p ->

@@ -5,8 +5,9 @@ package com.bodytempgage.core
  * Layer. Kept as pure data (no Android types) so the merge policy is unit-testable off-device;
  * the Android sync layer converts between this and a `DataMap`.
  *
- * `gattRequested` is intentionally excluded — holding a GATT connection is a device-local
- * decision that should not follow the user across devices.
+ * Device-local flags (background monitoring on/off, the watch's auto-disable timeout) are
+ * intentionally excluded — they are per-device decisions that should not follow the user across
+ * devices.
  *
  * @param updatedAt wall-clock time (millis) the snapshot was produced; drives last-write-wins.
  */

@@ -88,6 +88,25 @@ fun SettingsScreen(
                 )
             }
 
+            // How long the watch keeps scanning with no reading before monitoring auto-disables.
+            if (settings.monitoringEnabled) {
+                item {
+                    ThresholdRow(
+                        label = stringResource(R.string.auto_disable_label),
+                        valueText = if (settings.autoDisableMinutes <= 0) {
+                            stringResource(R.string.auto_disable_off)
+                        } else {
+                            stringResource(R.string.auto_disable_minutes, settings.autoDisableMinutes)
+                        },
+                        onStep = { delta ->
+                            val next = (settings.autoDisableMinutes + if (delta > 0) 1 else -1)
+                                .coerceIn(0, AUTO_DISABLE_MAX_MINUTES)
+                            scope.launch { container.settings.setAutoDisableMinutes(next) }
+                        },
+                    )
+                }
+            }
+
             item {
                 ToggleChip(
                     checked = settings.alertEnabled,
@@ -223,6 +242,9 @@ fun SettingsScreen(
         }
     }
 }
+
+/** Upper bound for the "stop after no data" timeout, in minutes. */
+private const val AUTO_DISABLE_MAX_MINUTES = 60
 
 /** One 0.1 °C step within [min]..[max], rounded so repeated steps don't drift. */
 private fun stepThreshold(current: Double, delta: Double, min: Double, max: Double): Double =

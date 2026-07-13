@@ -33,19 +33,6 @@ object T201Decoder {
         return decodeRaw(obj.payload, 0, timestampMillis)
     }
 
-    /**
-     * Decodes the MMC-T201-2's GATT notification payload (Intermediate Temperature, 0x2A1E).
-     *
-     * The firmware does not follow the Health Thermometer spec: instead of an IEEE-11073
-     * float it streams `status (1) | int16 temp1 | int16 temp2 | uint8 battery` about every
-     * 2 seconds — the same raw sensors as the advertisement, just faster. Observed on real
-     * hardware, e.g. `00 840d 5c0d 61` = 34.60 °C / 34.20 °C / 97 %.
-     */
-    fun decodeGattPayload(payload: ByteArray, timestampMillis: Long): GaugeReading? {
-        if (payload.size < 6) return null
-        return decodeRaw(payload, 1, timestampMillis)
-    }
-
     private fun decodeRaw(p: ByteArray, offset: Int, timestampMillis: Long): GaugeReading? {
         if (p.size < offset + 5) return null
 

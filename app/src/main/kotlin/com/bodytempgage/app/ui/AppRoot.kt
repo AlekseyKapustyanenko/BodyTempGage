@@ -86,10 +86,8 @@ fun AppRoot(container: AppContainer) {
             DevicePickerScreen(
                 container = container,
                 onSelected = { mac, name ->
-                    container.gattClient.disconnect()
                     scope.launch {
                         container.settings.setSelectedDevice(mac, name)
-                        container.settings.setGattRequested(false)
                         container.readings.resetLatest()
                     }
                     screen = Screen.Main

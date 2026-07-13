@@ -19,6 +19,7 @@ object Notifications {
     const val STATUS_NOTIFICATION_ID = 1
     const val ALERT_NOTIFICATION_ID = 2
     const val WARNING_NOTIFICATION_ID = 3
+    const val PAUSED_NOTIFICATION_ID = 4
 
     fun createChannels(context: Context) {
         val manager = context.getSystemService(NotificationManager::class.java)
@@ -71,6 +72,18 @@ object Notifications {
             .setContentIntent(contentIntent(context))
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setCategory(NotificationCompat.CATEGORY_ALARM)
+            .setAutoCancel(true)
+            .build()
+
+    /** Shown when background monitoring auto-disables after the gauge goes silent. */
+    fun monitoringPausedNotification(context: Context, minutes: Int): android.app.Notification =
+        NotificationCompat.Builder(context, CHANNEL_ALERTS)
+            .setSmallIcon(R.drawable.ic_stat_thermometer)
+            .setContentTitle(context.getString(R.string.notif_paused_title))
+            .setContentText(context.getString(R.string.notif_paused_text, minutes))
+            .setContentIntent(contentIntent(context))
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setCategory(NotificationCompat.CATEGORY_STATUS)
             .setAutoCancel(true)
             .build()
 

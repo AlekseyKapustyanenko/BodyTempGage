@@ -24,14 +24,11 @@ import androidx.compose.material.icons.filled.BatteryFull
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
@@ -60,7 +57,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.bodytempgage.app.AppContainer
 import com.bodytempgage.app.R
 import com.bodytempgage.common.ble.BleEngine
-import com.bodytempgage.common.ble.GattClient
 import com.bodytempgage.common.data.AppSettings
 import com.bodytempgage.common.TempFormat
 import com.bodytempgage.app.service.MonitorService
@@ -79,16 +75,12 @@ fun MainScreen(
     val scope = rememberCoroutineScope()
 
     val reading by container.readings.latest.collectAsStateWithLifecycle()
-    val liveRaw by container.readings.liveBodyTemp.collectAsStateWithLifecycle()
     val rssi by container.readings.latestRssi.collectAsStateWithLifecycle()
     val scanState by container.bleEngine.state.collectAsStateWithLifecycle()
-    val gattState by container.gattClient.state.collectAsStateWithLifecycle()
     val monitoring by MonitorService.isRunning.collectAsStateWithLifecycle()
     val history by container.readings.history.collectAsStateWithLifecycle()
 
     val now = rememberNowMillis()
-    // The gauge's own reading (GATT) wins over the advertisement estimate while fresh.
-    val live = liveRaw?.takeIf { now - it.timestampMillis < MonitorService.LIVE_FRESH_MILLIS }
 
     val notificationLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission(),
@@ -148,8 +140,8 @@ fun MainScreen(
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     val r = reading
-                    val bodyTempC = live?.tempC ?: r?.bodyTempC
-                    if (r == null && bodyTempC == null) {
+                    val bodyTempC = r?.bodyTempC
+                    if (r == null) {
                         Text(
                             text = "—",
                             style = MaterialTheme.typography.displayLarge,
@@ -176,11 +168,6 @@ fun MainScreen(
 
                             else -> MaterialTheme.colorScheme.onSurface
                         }
-                        val bodySuffix = if (live != null) {
-                            " · " + stringResource(R.string.source_device)
-                        } else {
-                            ""
-                        }
 
                         when (settings.displayMode) {
                             DisplayMode.GAUGE -> {
@@ -198,7 +185,7 @@ fun MainScreen(
                                     value = bodyTempC?.let {
                                         TempFormat.format(it, settings.useFahrenheit)
                                     } ?: "—",
-                                    label = stringResource(R.string.label_body_temp) + bodySuffix,
+                                    label = stringResource(R.string.label_body_temp),
                                     big = true,
                                     valueColor = bodyColor,
                                 )
@@ -209,7 +196,7 @@ fun MainScreen(
                                     value = bodyTempC?.let {
                                         TempFormat.format(it, settings.useFahrenheit)
                                     } ?: "—",
-                                    label = stringResource(R.string.label_body_temp) + bodySuffix,
+                                    label = stringResource(R.string.label_body_temp),
                                     big = false,
                                     valueColor = bodyColor,
                                 )
@@ -224,16 +211,13 @@ fun MainScreen(
                         }
 
                         StatusRow(
-                            batteryPercent = r?.batteryPercent,
-                            rssi = if (r != null) rssi else null,
-                            lastDataMillis = maxOf(
-                                r?.timestampMillis ?: 0L,
-                                live?.timestampMillis ?: 0L,
-                            ),
+                            batteryPercent = r.batteryPercent,
+                            rssi = rssi,
+                            lastDataMillis = r.timestampMillis,
                             now = now,
                         )
 
-                        if (r != null && bodyTempC == null && settings.displayMode != DisplayMode.GAUGE) {
+                        if (bodyTempC == null && settings.displayMode != DisplayMode.GAUGE) {
                             Text(
                                 text = stringResource(R.string.not_worn_hint),
                                 style = MaterialTheme.typography.bodySmall,
@@ -265,67 +249,6 @@ fun MainScreen(
                             .fillMaxWidth()
                             .height(200.dp),
                     )
-                }
-            }
-
-            // GATT "exact reading" connection
-            Card(modifier = Modifier.fillMaxWidth()) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    Text(
-                        text = stringResource(R.string.connect_title),
-                        style = MaterialTheme.typography.titleMedium,
-                    )
-                    Text(
-                        text = when (gattState) {
-                            GattClient.State.DISCONNECTED -> stringResource(R.string.connect_desc)
-                            GattClient.State.CONNECTING -> stringResource(R.string.connect_connecting)
-                            GattClient.State.CONNECTED -> stringResource(R.string.connect_connected)
-                            GattClient.State.FAILED -> stringResource(R.string.connect_failed)
-                        },
-                        style = MaterialTheme.typography.bodySmall,
-                        color = if (gattState == GattClient.State.FAILED) {
-                            MaterialTheme.colorScheme.error
-                        } else {
-                            MaterialTheme.colorScheme.onSurfaceVariant
-                        },
-                    )
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        when (gattState) {
-                            GattClient.State.DISCONNECTED, GattClient.State.FAILED -> Button(
-                                onClick = {
-                                    val mac = settings.selectedMac ?: return@Button
-                                    scope.launch { container.settings.setGattRequested(true) }
-                                    container.gattClient.connect(mac)
-                                },
-                                enabled = settings.selectedMac != null,
-                            ) {
-                                Text(stringResource(R.string.connect))
-                            }
-
-                            GattClient.State.CONNECTING -> {
-                                CircularProgressIndicator(modifier = Modifier.width(24.dp))
-                                Spacer(Modifier.width(12.dp))
-                                OutlinedButton(onClick = {
-                                    scope.launch { container.settings.setGattRequested(false) }
-                                    container.gattClient.disconnect()
-                                }) {
-                                    Text(stringResource(R.string.cancel))
-                                }
-                            }
-
-                            GattClient.State.CONNECTED -> OutlinedButton(onClick = {
-                                scope.launch { container.settings.setGattRequested(false) }
-                                container.gattClient.disconnect()
-                            }) {
-                                Text(stringResource(R.string.disconnect))
-                            }
-                        }
-                    }
                 }
             }
 

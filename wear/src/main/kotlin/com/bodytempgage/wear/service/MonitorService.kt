@@ -26,6 +26,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.sample
 import kotlinx.coroutines.launch
 
@@ -53,8 +54,13 @@ class MonitorService : LifecycleService() {
         )
         container.bleEngine.start(BleEngine.Client.SERVICE)
         _isRunning.value = true
+        // Monitoring just turned on: refresh the tile so its Monitor toggle shows "On".
+        refreshTile()
 
+        val startMillis = System.currentTimeMillis()
         val manager = getSystemService(NotificationManager::class.java)
+        // Clear any stale "monitoring paused" notice from a previous auto-disable.
+        manager.cancel(Notifications.PAUSED_NOTIFICATION_ID)
 
         // Advertisements arrive several times a second; posting a Wear notification that often
         // (and on the main thread) starves the UI. Run off the main thread and sample so the
@@ -88,8 +94,7 @@ class MonitorService : LifecycleService() {
                             Notifications.statusNotification(this@MonitorService, text),
                         )
                         // Keep the temperature tile and watch-face complication in step.
-                        TileService.getUpdater(this@MonitorService)
-                            .requestUpdate(TempTileService::class.java)
+                        refreshTile()
                         ComplicationDataSourceUpdateRequester.create(
                             applicationContext,
                             ComponentName(this@MonitorService, TempComplicationService::class.java),
@@ -102,12 +107,15 @@ class MonitorService : LifecycleService() {
                 }
         }
 
-        // Flag stale data in the notification when the gauge disappears.
+        // Flag stale data in the notification when the gauge disappears, and auto-disable
+        // monitoring entirely once the gauge has been silent for the user-configured number of
+        // minutes so a watch that's wandered out of range doesn't scan (and drain) all day.
         lifecycleScope.launch(Dispatchers.Default) {
             while (true) {
-                delay(60_000)
-                val last = container.readings.latest.value?.timestampMillis ?: 0L
-                if (System.currentTimeMillis() - last > STALE_AFTER_MILLIS) {
+                delay(STALE_CHECK_MILLIS)
+                val lastReading = container.readings.latest.value?.timestampMillis ?: 0L
+                val now = System.currentTimeMillis()
+                if (now - lastReading > STALE_AFTER_MILLIS) {
                     manager.notify(
                         Notifications.STATUS_NOTIFICATION_ID,
                         Notifications.statusNotification(
@@ -115,6 +123,27 @@ class MonitorService : LifecycleService() {
                             getString(R.string.notif_waiting),
                         ),
                     )
+                }
+
+                val autoDisableMinutes = container.settings.flow.first().autoDisableMinutes
+                if (autoDisableMinutes > 0) {
+                    // Count silence from service start so a stale reading from a previous run
+                    // can't trip the timer the moment monitoring turns back on.
+                    val lastData = maxOf(startMillis, lastReading)
+                    if (now - lastData >= autoDisableMinutes * 60_000L) {
+                        // Its own notification id (not the foreground one) so it outlives the
+                        // service being torn down and tells the user monitoring turned off.
+                        manager.notify(
+                            Notifications.PAUSED_NOTIFICATION_ID,
+                            Notifications.monitoringPausedNotification(
+                                this@MonitorService,
+                                autoDisableMinutes,
+                            ),
+                        )
+                        container.settings.setMonitoringEnabled(false)
+                        stopSelf()
+                        break
+                    }
                 }
             }
         }
@@ -154,11 +183,24 @@ class MonitorService : LifecycleService() {
     override fun onDestroy() {
         WearApp.container(this).bleEngine.stop(BleEngine.Client.SERVICE)
         _isRunning.value = false
+        // Monitoring stopped (settings toggle, phone/app, or auto-disable): refresh the tile so
+        // its Monitor toggle drops back to "Off" instead of showing stale "On".
+        refreshTile()
         super.onDestroy()
+    }
+
+    /** Ask the system to re-render the temperature tile so it reflects the latest state. */
+    private fun refreshTile() {
+        runCatching {
+            TileService.getUpdater(this).requestUpdate(TempTileService::class.java)
+        }
     }
 
     companion object {
         private const val STALE_AFTER_MILLIS = 5 * 60_000L
+
+        /** Cadence of the stale-data / auto-disable check. */
+        private const val STALE_CHECK_MILLIS = 30_000L
         private const val ALERT_COOLDOWN_MILLIS = 5 * 60_000L
         private const val REARM_HYSTERESIS_C = 0.2
 

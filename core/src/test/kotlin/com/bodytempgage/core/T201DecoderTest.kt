@@ -85,25 +85,6 @@ class T201DecoderTest {
     }
 
     @Test
-    fun `decodes gatt notification payload`() {
-        // captured from a real MMC-T201-2 (0x2A1E notification)
-        val reading = T201Decoder.decodeGattPayload(MiBeaconParserTest.hex("00840d5c0d61"), 7L)!!
-        assertEquals(34.60, reading.gaugeTempC, 1e-9)
-        assertEquals(34.20, reading.ambientTempC, 1e-9)
-        assertEquals(97, reading.batteryPercent)
-        assertEquals(7L, reading.timestampMillis)
-
-        val reading2 = T201Decoder.decodeGattPayload(MiBeaconParserTest.hex("00880d840d61"), 0L)!!
-        assertEquals(34.64, reading2.gaugeTempC, 1e-9)
-        assertEquals(34.60, reading2.ambientTempC, 1e-9)
-    }
-
-    @Test
-    fun `rejects short gatt payload`() {
-        assertNull(T201Decoder.decodeGattPayload(MiBeaconParserTest.hex("00840d5c0d"), 0L))
-    }
-
-    @Test
     fun `end to end from raw service data`() {
         val serviceData = MiBeaconParserTest.hex("7022db0063c16fddf9810009002005c80d640d51")
         val frame = MiBeaconParser.parse(serviceData)
