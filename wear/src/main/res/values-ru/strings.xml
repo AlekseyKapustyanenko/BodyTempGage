@@ -68,6 +68,8 @@
     <string name="notif_status_text">Тело %1$s · Датчик %2$s · %3$d%%</string>
     <string name="notif_status_body_only">Тело %1$s</string>
     <string name="notif_status_gauge_only">Датчик %1$s · %2$d%% · не на теле</string>
+    <string name="notif_paused_title">Мониторинг приостановлен</string>
+    <string name="notif_paused_text">Нет сигнала от термометра %1$d мин</string>
     <string name="notif_fever_title">Высокая температура!</string>
     <string name="notif_low_title">Низкая температура!</string>
     <string name="notif_warn_high_title">Повышенная температура</string>

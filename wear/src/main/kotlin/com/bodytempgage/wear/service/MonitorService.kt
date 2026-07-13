@@ -57,6 +57,8 @@ class MonitorService : LifecycleService() {
 
         val startMillis = System.currentTimeMillis()
         val manager = getSystemService(NotificationManager::class.java)
+        // Clear any stale "monitoring paused" notice from a previous auto-disable.
+        manager.cancel(Notifications.PAUSED_NOTIFICATION_ID)
 
         // Advertisements arrive several times a second; posting a Wear notification that often
         // (and on the main thread) starves the UI. Run off the main thread and sample so the
@@ -128,6 +130,15 @@ class MonitorService : LifecycleService() {
                     // can't trip the timer the moment monitoring turns back on.
                     val lastData = maxOf(startMillis, lastReading)
                     if (now - lastData >= autoDisableMinutes * 60_000L) {
+                        // Its own notification id (not the foreground one) so it outlives the
+                        // service being torn down and tells the user monitoring turned off.
+                        manager.notify(
+                            Notifications.PAUSED_NOTIFICATION_ID,
+                            Notifications.monitoringPausedNotification(
+                                this@MonitorService,
+                                autoDisableMinutes,
+                            ),
+                        )
                         container.settings.setMonitoringEnabled(false)
                         stopSelf()
                         break

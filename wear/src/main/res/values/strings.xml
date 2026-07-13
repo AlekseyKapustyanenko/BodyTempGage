@@ -68,6 +68,8 @@
     <string name="notif_status_text">Body %1$s · Gauge %2$s · %3$d%%</string>
     <string name="notif_status_body_only">Body %1$s</string>
     <string name="notif_status_gauge_only">Gauge %1$s · %2$d%% · not worn</string>
+    <string name="notif_paused_title">Monitoring paused</string>
+    <string name="notif_paused_text">No signal from the thermometer for %1$d min</string>
     <string name="notif_fever_title">High temperature!</string>
     <string name="notif_low_title">Low temperature!</string>
     <string name="notif_warn_high_title">Elevated temperature</string>
