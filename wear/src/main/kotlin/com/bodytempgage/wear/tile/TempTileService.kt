@@ -166,10 +166,11 @@ class TempTileService : TileService() {
                     .setVerticalAlignment(LayoutElementBuilders.VERTICAL_ALIGN_CENTER)
                     .addContent(
                         labeledToggle(
-                            getString(R.string.tile_monitor),
-                            settings.monitoringEnabled,
-                            CLICK_TOGGLE_MONITOR,
-                            deviceParameters,
+                            label = getString(R.string.tile_monitor),
+                            stateOn = settings.monitoringEnabled,
+                            highlight = settings.monitoringEnabled,
+                            clickId = CLICK_TOGGLE_MONITOR,
+                            deviceParameters = deviceParameters,
                         ),
                     )
                     .addContent(
@@ -178,11 +179,14 @@ class TempTileService : TileService() {
                             .build(),
                     )
                     .addContent(
+                        // Alerts stay grey while monitoring is off: without incoming readings
+                        // no threshold can be crossed, so the "on" state would be misleading.
                         labeledToggle(
-                            getString(R.string.tile_alerts_label),
-                            settings.alertEnabled,
-                            CLICK_TOGGLE_ALERT,
-                            deviceParameters,
+                            label = getString(R.string.tile_alerts_label),
+                            stateOn = settings.alertEnabled,
+                            highlight = settings.alertEnabled && settings.monitoringEnabled,
+                            clickId = CLICK_TOGGLE_ALERT,
+                            deviceParameters = deviceParameters,
                         ),
                     )
                     .build(),
@@ -228,13 +232,15 @@ class TempTileService : TileService() {
             .build()
 
     /**
-     * A caption ("Monitor"/"Alerts") stacked above a compact On/Off chip. The chip is green while
-     * enabled and dim while off so its state reads at a glance; tapping toggles [clickId] via a
-     * reload, which re-issues the tile request and re-renders the flipped state.
+     * A caption ("Monitor"/"Alerts") stacked above a compact chip. [stateOn] drives the "On"/"Off"
+     * text; [highlight] drives the colour — green when the control is both on and actually in
+     * effect, dim grey otherwise (e.g. alerts stay grey while monitoring is off, since they can't
+     * fire without new readings). Tapping toggles [clickId] via a reload that re-renders the state.
      */
     private fun labeledToggle(
         label: String,
-        enabled: Boolean,
+        stateOn: Boolean,
+        highlight: Boolean,
         clickId: String,
         deviceParameters: DeviceParametersBuilders.DeviceParameters,
     ): LayoutElementBuilders.LayoutElement =
@@ -249,14 +255,14 @@ class TempTileService : TileService() {
             .addContent(
                 CompactChip.Builder(
                     this,
-                    getString(if (enabled) R.string.tile_on else R.string.tile_off),
+                    getString(if (stateOn) R.string.tile_on else R.string.tile_off),
                     ModifiersBuilders.Clickable.Builder()
                         .setId(clickId)
                         .setOnClick(ActionBuilders.LoadAction.Builder().build())
                         .build(),
                     deviceParameters,
                 ).setChipColors(
-                    if (enabled) {
+                    if (highlight) {
                         ChipColors(COLOR_TOGGLE_ON_BG, COLOR_DEFAULT)
                     } else {
                         ChipColors(COLOR_TOGGLE_OFF_BG, COLOR_DIM)
