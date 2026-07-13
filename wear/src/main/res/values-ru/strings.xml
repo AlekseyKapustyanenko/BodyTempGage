@@ -49,7 +49,7 @@
     <string name="tile_label">Температура</string>
     <string name="tile_no_data">Нет свежих данных</string>
     <string name="tile_monitor">Монитор</string>
-    <string name="tile_alerts_label">Сигналы</string>
+    <string name="tile_alerts_label">Оповещения</string>
     <string name="tile_on">Вкл</string>
     <string name="tile_off">Выкл</string>
 
