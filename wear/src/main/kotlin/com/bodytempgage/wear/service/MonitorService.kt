@@ -42,6 +42,9 @@ class MonitorService : LifecycleService() {
         cooldownMillis = ALERT_COOLDOWN_MILLIS,
     )
 
+    /** Notify about a low gauge battery once per discharge, re-armed on recovery. */
+    private var lowBatteryNotified = false
+
     override fun onCreate() {
         super.onCreate()
         val container = WearApp.container(this)
@@ -104,6 +107,7 @@ class MonitorService : LifecycleService() {
                     if (settings.alertEnabled && bodyTempC != null) {
                         checkThresholds(manager, bodyTempC, settings)
                     }
+                    checkBattery(manager, reading.batteryPercent)
                 }
         }
 
@@ -180,6 +184,21 @@ class MonitorService : LifecycleService() {
         }
     }
 
+    private fun checkBattery(manager: NotificationManager, batteryPercent: Int) {
+        if (batteryPercent < LOW_BATTERY_PERCENT) {
+            if (!lowBatteryNotified) {
+                lowBatteryNotified = true
+                manager.notify(
+                    Notifications.BATTERY_NOTIFICATION_ID,
+                    Notifications.batteryNotification(this, batteryPercent),
+                )
+            }
+        } else if (batteryPercent >= LOW_BATTERY_REARM_PERCENT) {
+            // Hysteresis so a reading flapping around the threshold can't re-notify.
+            lowBatteryNotified = false
+        }
+    }
+
     override fun onDestroy() {
         WearApp.container(this).bleEngine.stop(BleEngine.Client.SERVICE)
         _isRunning.value = false
@@ -203,6 +222,8 @@ class MonitorService : LifecycleService() {
         private const val STALE_CHECK_MILLIS = 30_000L
         private const val ALERT_COOLDOWN_MILLIS = 5 * 60_000L
         private const val REARM_HYSTERESIS_C = 0.2
+        private const val LOW_BATTERY_PERCENT = 15
+        private const val LOW_BATTERY_REARM_PERCENT = 20
 
         /** Minimum spacing between status-notification refreshes (advertisements are far faster). */
         private const val NOTIFY_THROTTLE_MILLIS = 10_000L

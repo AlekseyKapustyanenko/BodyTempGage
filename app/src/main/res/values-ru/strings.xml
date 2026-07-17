@@ -41,7 +41,7 @@
     <string name="alert_threshold_low">Тревога: низкая</string>
     <string name="change_device">Сменить устройство</string>
     <string name="about_title">О приложении</string>
-    <string name="about_text">Считывает показания термометров Xiaomi Miaomiaoce MMC-T201 через Bluetooth LE без сопряжения. Температура тела рассчитывается по двум встроенным датчикам по формуле сообщества из ble_monitor для Home Assistant (issue #264).</string>
+    <string name="about_text">Считывает показания термометров Xiaomi Miaomiaoce MMC-T201 через Bluetooth LE без сопряжения. Температура тела рассчитывается по двум встроенным датчикам по алгоритму официального приложения Meawow.</string>
 
     <!-- Permissions -->
     <string name="permissions_title">Нужно разрешение Bluetooth</string>
@@ -49,7 +49,7 @@
     <string name="grant">Дать разрешение</string>
     <string name="open_app_settings">Открыть настройки приложения</string>
 
-    <string name="detail_estimate">Оценка (по формуле)</string>
+    <string name="detail_calculated">Расчётная температура</string>
     <string name="warmup_hint">После надевания датчика показания стабилизируются примерно за 5 минут.</string>
     <string name="not_worn_hint">Датчик не на теле — температура тела появится, когда он нагреется на коже.</string>
 
@@ -66,6 +66,8 @@
     <string name="notif_warn_high_title">Повышенная температура</string>
     <string name="notif_warn_low_title">Пониженная температура</string>
     <string name="notif_temp_text">Температура тела %1$s</string>
+    <string name="notif_battery_title">Батарея термометра разряжается</string>
+    <string name="notif_battery_text">Заряд %1$d%% — скоро потребуется подзарядка</string>
 
     <!-- Chart -->
     <string name="chart_title">История</string>
