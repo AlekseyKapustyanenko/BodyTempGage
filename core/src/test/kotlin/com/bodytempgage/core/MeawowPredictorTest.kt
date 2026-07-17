@@ -92,6 +92,17 @@ class MeawowPredictorTest {
     }
 
     @Test
+    fun `isPredicting tracks the gate`() {
+        val p = MeawowPredictor()
+        p.predict(26.22, 26.0, 0L)
+        assertTrue(!p.isPredicting)
+        p.predict(35.0, 30.0, 1_000L)
+        assertTrue(p.isPredicting)
+        p.predict(31.0, 28.0, 2_000L)
+        assertTrue(!p.isPredicting)
+    }
+
+    @Test
     fun `reset forgets the peak hold`() {
         val p = MeawowPredictor()
         p.settle(35.0, 30.0)

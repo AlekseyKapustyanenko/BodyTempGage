@@ -5,9 +5,10 @@ package com.bodytempgage.core
  *
  * @param gaugeTempC   skin-side sensor temperature, °C (the raw "gauge" reading)
  * @param ambientTempC outer (environment-side) sensor temperature, °C
- * @param bodyTempC    estimated core body temperature, °C (dual-heat-flux compensation);
- *                     null while the gauge is off the body — the empirical formula is only
- *                     valid with the skin sensor inside its fitted domain
+ * @param bodyTempC    estimated core body temperature, °C, produced by [MeawowPredictor]
+ *                     (the official Meawow app's algorithm); null straight out of the
+ *                     decoder and while the gauge is off the body — the predictor only
+ *                     engages once the skin sensor reaches body-temperature range
  * @param batteryPercent gauge battery level, 0–100
  */
 data class GaugeReading(

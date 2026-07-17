@@ -1,15 +1,14 @@
 package com.bodytempgage.core
 
-import kotlin.math.exp
-
 /**
  * Decoder for the Xiaomi Miaomiaoce MMC-T201-1 / MMC-T201-2 body thermometer.
  *
  * The device broadcasts MiBeacon object 0x2000 with two raw thermistor readings
  * (skin side and environment side) plus a battery byte. Body temperature is not
- * transmitted; it is estimated from both sensors with the empirical fit derived in
- * https://github.com/custom-components/ble_monitor/issues/264 (the same formula
- * Home Assistant's ble_monitor ships).
+ * transmitted; it is estimated from both sensors by [MeawowPredictor] — the official
+ * Meawow app's algorithm. The predictor is stateful (it tracks each reading stream over
+ * time), so it runs where the streams live, not here: the decoder only extracts the raw
+ * sensor values and leaves [GaugeReading.bodyTempC] null.
  */
 object T201Decoder {
 
@@ -19,13 +18,6 @@ object T201Decoder {
     const val PRODUCT_ID_T201_1 = 0x00DB
 
     const val DEVICE_NAME_PREFIX = "MMC-T201"
-
-    /**
-     * The body-temperature fit was derived from worn-gauge data (skin ≈ 32–37 °C). Below
-     * this skin temperature both exponential terms collapse and the formula returns its
-     * ~36.4 °C constant regardless of the input, so no estimate is reported.
-     */
-    const val BODY_ESTIMATE_MIN_SKIN_C = 32.0
 
     /** Returns null when the frame carries no valid 0x2000 object. */
     fun decode(frame: MiBeaconFrame, timestampMillis: Long): GaugeReading? {
@@ -45,20 +37,11 @@ object T201Decoder {
         return GaugeReading(
             gaugeTempC = temp1,
             ambientTempC = temp2,
-            bodyTempC = if (temp1 >= BODY_ESTIMATE_MIN_SKIN_C) bodyTemperature(temp1, temp2) else null,
+            bodyTempC = null,
             batteryPercent = battery,
             timestampMillis = timestampMillis,
         )
     }
-
-    /**
-     * Dual-heat-flux body temperature estimate from the skin-side ([temp1]) and
-     * environment-side ([temp2]) sensor temperatures, °C.
-     */
-    fun bodyTemperature(temp1: Double, temp2: Double): Double =
-        3.71934e-11 * exp(0.69314 * temp1) -
-            1.02801e-8 * exp(0.53871 * temp2) +
-            36.413
 
     private fun readInt16Le(data: ByteArray, offset: Int): Int =
         ((data[offset].toInt() and 0xFF) or (data[offset + 1].toInt() shl 8)).toShort().toInt()

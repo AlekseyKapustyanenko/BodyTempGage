@@ -40,6 +40,13 @@ class MeawowPredictor {
     private var prev = Double.NEGATIVE_INFINITY
     private var predictingSinceMillis: Long? = null
 
+    /**
+     * Whether the last [predict] call actually predicted core temperature. When false the
+     * predictor just echoed the skin temperature (gauge below the engage threshold, i.e.
+     * off the body), so the output is not a body-temperature estimate.
+     */
+    val isPredicting: Boolean get() = predictingSinceMillis != null
+
     /** Forget all state (e.g. after switching to another device). */
     fun reset() {
         prev = Double.NEGATIVE_INFINITY

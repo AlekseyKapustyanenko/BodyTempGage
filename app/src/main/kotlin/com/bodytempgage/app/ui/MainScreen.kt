@@ -324,10 +324,6 @@ fun MainScreen(
                             reading?.let { TempFormat.format(it.ambientTempC, settings.useFahrenheit) } ?: "—",
                         )
                         DetailRow(
-                            stringResource(R.string.detail_estimate),
-                            reading?.bodyTempC?.let { TempFormat.format(it, settings.useFahrenheit) } ?: "—",
-                        )
-                        DetailRow(
                             stringResource(R.string.detail_meawow),
                             meawowTemp?.let { TempFormat.format(it, settings.useFahrenheit) } ?: "—",
                         )

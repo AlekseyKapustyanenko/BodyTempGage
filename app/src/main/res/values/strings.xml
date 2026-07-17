@@ -41,7 +41,7 @@
     <string name="alert_threshold_low">Low alert</string>
     <string name="change_device">Change device</string>
     <string name="about_title">About</string>
-    <string name="about_text">Reads Xiaomi Miaomiaoce MMC-T201 thermometers over Bluetooth LE advertisements — no pairing needed. Body temperature is estimated from the two on-device sensors using the community formula from Home Assistant\'s ble_monitor (issue #264).</string>
+    <string name="about_text">Reads Xiaomi Miaomiaoce MMC-T201 thermometers over Bluetooth LE advertisements — no pairing needed. Body temperature is estimated from the two on-device sensors using the algorithm of the official Meawow app.</string>
 
     <!-- Permissions -->
     <string name="permissions_title">Bluetooth permission needed</string>
@@ -49,9 +49,7 @@
     <string name="grant">Grant permission</string>
     <string name="open_app_settings">Open app settings</string>
 
-    <string name="detail_estimate">Estimate (formula)</string>
     <string name="detail_meawow">Meawow app algorithm</string>
-    <string name="legend_meawow">Meawow</string>
     <string name="warmup_hint">After putting the gauge on, readings stabilize in about 5 minutes.</string>
     <string name="not_worn_hint">Gauge is off the body — body temperature appears once it warms up on the skin.</string>
 
