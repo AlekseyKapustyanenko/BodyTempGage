@@ -49,7 +49,7 @@
     <string name="grant">Дать разрешение</string>
     <string name="open_app_settings">Открыть настройки приложения</string>
 
-    <string name="detail_meawow">Алгоритм приложения Meawow</string>
+    <string name="detail_calculated">Расчётная температура</string>
     <string name="warmup_hint">После надевания датчика показания стабилизируются примерно за 5 минут.</string>
     <string name="not_worn_hint">Датчик не на теле — температура тела появится, когда он нагреется на коже.</string>
 
