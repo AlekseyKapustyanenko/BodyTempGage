@@ -1,6 +1,7 @@
 package com.bodytempgage.common.data
 
 import com.bodytempgage.core.GaugeReading
+import com.bodytempgage.core.MeawowPredictor
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -20,6 +21,8 @@ data class TempSample(
     /** Null while the gauge was off the body (no valid estimate). */
     val bodyTempC: Double?,
     val gaugeTempC: Double?,
+    /** What the official Meawow app would display for this sample ([MeawowPredictor]). */
+    val meawowTempC: Double? = null,
 )
 
 /**
@@ -38,6 +41,13 @@ class ReadingRepository {
     private val _latestRssi = MutableStateFlow<Int?>(null)
     val latestRssi: StateFlow<Int?> = _latestRssi.asStateFlow()
 
+    /** Temperature the official Meawow app would display for the latest reading, °C. */
+    private val _latestMeawow = MutableStateFlow<Double?>(null)
+    val latestMeawow: StateFlow<Double?> = _latestMeawow.asStateFlow()
+
+    /** Stateful (peak-hold + slew limit), so one instance tied to the selected stream. */
+    private val meawowPredictor = MeawowPredictor()
+
     private val _devices = MutableStateFlow<Map<String, DiscoveredGauge>>(emptyMap())
     val devices: StateFlow<Map<String, DiscoveredGauge>> = _devices.asStateFlow()
 
@@ -46,10 +56,11 @@ class ReadingRepository {
     val history: StateFlow<List<TempSample>> = _history.asStateFlow()
 
     fun report(mac: String, name: String?, rssi: Int, reading: GaugeReading) {
+        val resolvedName = name ?: _devices.value[mac]?.name
         _devices.value = _devices.value + (
             mac to DiscoveredGauge(
                 mac = mac,
-                name = name ?: _devices.value[mac]?.name,
+                name = resolvedName,
                 rssi = rssi,
                 lastSeenMillis = reading.timestampMillis,
                 lastReading = reading,
@@ -57,9 +68,16 @@ class ReadingRepository {
             )
         val selected = selectedMac
         if (selected == null || selected.equals(mac, ignoreCase = true)) {
+            val meawowTempC = meawowPredictor.predict(
+                skinTempC = reading.gaugeTempC,
+                outerTempC = reading.ambientTempC,
+                timestampMillis = reading.timestampMillis,
+                params = meawowParams(resolvedName),
+            )
             _latest.value = reading
             _latestRssi.value = rssi
-            recordSample(reading.timestampMillis, reading.bodyTempC, reading.gaugeTempC)
+            _latestMeawow.value = meawowTempC
+            recordSample(reading.timestampMillis, reading.bodyTempC, reading.gaugeTempC, meawowTempC)
         }
     }
 
@@ -67,16 +85,31 @@ class ReadingRepository {
     fun resetLatest() {
         _latest.value = null
         _latestRssi.value = null
+        _latestMeawow.value = null
         _history.value = emptyList()
+        meawowPredictor.reset()
     }
 
-    private fun recordSample(timestampMillis: Long, bodyTempC: Double?, gaugeTempC: Double?) {
+    /** The Meawow app uses a lighter gradient weight for the MMC-T201-2 model. */
+    private fun meawowParams(name: String?): MeawowPredictor.Params =
+        if (name?.contains("T201-2") == true) {
+            MeawowPredictor.Params.T201_2
+        } else {
+            MeawowPredictor.Params.T201
+        }
+
+    private fun recordSample(
+        timestampMillis: Long,
+        bodyTempC: Double?,
+        gaugeTempC: Double?,
+        meawowTempC: Double?,
+    ) {
         val samples = _history.value
         val last = samples.lastOrNull()
         if (last != null && timestampMillis - last.timestampMillis < MIN_SAMPLE_INTERVAL_MILLIS) return
         val cutoff = timestampMillis - HISTORY_WINDOW_MILLIS
         _history.value = samples.dropWhile { it.timestampMillis < cutoff } +
-            TempSample(timestampMillis, bodyTempC, gaugeTempC)
+            TempSample(timestampMillis, bodyTempC, gaugeTempC, meawowTempC)
     }
 
     private companion object {

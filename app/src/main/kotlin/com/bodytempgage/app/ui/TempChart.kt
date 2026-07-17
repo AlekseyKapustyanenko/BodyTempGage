@@ -63,13 +63,15 @@ fun TempChart(
     nowMillis: Long,
     modifier: Modifier = Modifier,
 ) {
-    // Chart only the series picked in the display-mode selector.
+    // Chart only the series picked in the display-mode selector; the Meawow estimate is
+    // a body-temperature series, so it follows the body selection.
     val showBody = settings.displayMode != DisplayMode.GAUGE
     val showGauge = settings.displayMode != DisplayMode.BODY
     val bodyCount = if (showBody) samples.count { it.bodyTempC != null } else 0
     val gaugeCount = if (showGauge) samples.count { it.gaugeTempC != null } else 0
+    val meawowCount = if (showBody) samples.count { it.meawowTempC != null } else 0
 
-    if (bodyCount < 2 && gaugeCount < 2) {
+    if (bodyCount < 2 && gaugeCount < 2 && meawowCount < 2) {
         Box(modifier = modifier, contentAlignment = Alignment.Center) {
             Text(
                 text = stringResource(R.string.chart_empty),
@@ -82,6 +84,7 @@ fun TempChart(
     }
     val drawBody = bodyCount > 0
     val drawGauge = gaugeCount > 0
+    val drawMeawow = meawowCount > 0
 
     val context = LocalContext.current
     val timeFormat = remember { android.text.format.DateFormat.getTimeFormat(context) }
@@ -91,6 +94,7 @@ fun TempChart(
 
     val bodyColor = MaterialTheme.colorScheme.primary
     val gaugeColor = MaterialTheme.colorScheme.tertiary
+    val meawowColor = MaterialTheme.colorScheme.secondary
     val alertColor = MaterialTheme.colorScheme.error
     val warnColor = warningColor()
     val gridColor = MaterialTheme.colorScheme.outlineVariant
@@ -114,6 +118,7 @@ fun TempChart(
     // Y bounds cover the visible series plus the enabled thresholds, with a little padding.
     val allValues = (if (drawBody) samples.mapNotNull { s -> s.bodyTempC?.let { display(it) } } else emptyList()) +
         (if (drawGauge) samples.mapNotNull { s -> s.gaugeTempC?.let { display(it) } } else emptyList()) +
+        (if (drawMeawow) samples.mapNotNull { s -> s.meawowTempC?.let { display(it) } } else emptyList()) +
         thresholds.map { display(it.first) }
     val pad = if (fahrenheit) 0.4 else 0.2
     val yMin = allValues.min() - pad
@@ -211,6 +216,13 @@ fun TempChart(
                     style = Stroke(1.5.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round),
                 )
             }
+            if (drawMeawow) {
+                drawPath(
+                    path = seriesPath { it.meawowTempC },
+                    color = meawowColor,
+                    style = Stroke(1.5.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round),
+                )
+            }
             if (drawBody) {
                 drawPath(
                     path = seriesPath { it.bodyTempC },
@@ -236,13 +248,17 @@ fun TempChart(
         }
 
         // With a single series the selector above already names it — no legend needed.
-        if (drawBody && drawGauge) {
+        val legend = buildList {
+            if (drawBody) add(bodyColor to stringResource(R.string.mode_body))
+            if (drawGauge) add(gaugeColor to stringResource(R.string.mode_gauge))
+            if (drawMeawow) add(meawowColor to stringResource(R.string.legend_meawow))
+        }
+        if (legend.size > 1) {
             Row(
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                LegendItem(bodyColor, stringResource(R.string.mode_body))
-                LegendItem(gaugeColor, stringResource(R.string.mode_gauge))
+                legend.forEach { (color, label) -> LegendItem(color, label) }
             }
         }
     }

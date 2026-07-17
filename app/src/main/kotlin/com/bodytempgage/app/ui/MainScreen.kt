@@ -76,6 +76,7 @@ fun MainScreen(
 
     val reading by container.readings.latest.collectAsStateWithLifecycle()
     val rssi by container.readings.latestRssi.collectAsStateWithLifecycle()
+    val meawowTemp by container.readings.latestMeawow.collectAsStateWithLifecycle()
     val scanState by container.bleEngine.state.collectAsStateWithLifecycle()
     val monitoring by MonitorService.isRunning.collectAsStateWithLifecycle()
     val history by container.readings.history.collectAsStateWithLifecycle()
@@ -325,6 +326,10 @@ fun MainScreen(
                         DetailRow(
                             stringResource(R.string.detail_estimate),
                             reading?.bodyTempC?.let { TempFormat.format(it, settings.useFahrenheit) } ?: "—",
+                        )
+                        DetailRow(
+                            stringResource(R.string.detail_meawow),
+                            meawowTemp?.let { TempFormat.format(it, settings.useFahrenheit) } ?: "—",
                         )
                         DetailRow(
                             stringResource(R.string.device_mac),
