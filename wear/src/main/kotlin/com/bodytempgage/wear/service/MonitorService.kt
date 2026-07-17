@@ -98,10 +98,7 @@ class MonitorService : LifecycleService() {
                         )
                         // Keep the temperature tile and watch-face complication in step.
                         refreshTile()
-                        ComplicationDataSourceUpdateRequester.create(
-                            applicationContext,
-                            ComponentName(this@MonitorService, TempComplicationService::class.java),
-                        ).requestUpdateAll()
+                        refreshComplication()
                     }
 
                     if (settings.alertEnabled && bodyTempC != null) {
@@ -202,9 +199,11 @@ class MonitorService : LifecycleService() {
     override fun onDestroy() {
         WearApp.container(this).bleEngine.stop(BleEngine.Client.SERVICE)
         _isRunning.value = false
-        // Monitoring stopped (settings toggle, phone/app, or auto-disable): refresh the tile so
-        // its Monitor toggle drops back to "Off" instead of showing stale "On".
+        // Monitoring stopped (settings toggle, phone/app, or auto-disable): refresh the tile and
+        // complication so the Monitor toggle drops back to "Off" and the stale temperature clears
+        // right away instead of lingering until the freshness window expires.
         refreshTile()
+        refreshComplication()
         super.onDestroy()
     }
 
@@ -212,6 +211,16 @@ class MonitorService : LifecycleService() {
     private fun refreshTile() {
         runCatching {
             TileService.getUpdater(this).requestUpdate(TempTileService::class.java)
+        }
+    }
+
+    /** Ask the system to re-render the watch-face complication so it reflects the latest state. */
+    private fun refreshComplication() {
+        runCatching {
+            ComplicationDataSourceUpdateRequester.create(
+                applicationContext,
+                ComponentName(this, TempComplicationService::class.java),
+            ).requestUpdateAll()
         }
     }
 

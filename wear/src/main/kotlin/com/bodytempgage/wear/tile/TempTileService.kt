@@ -89,9 +89,11 @@ class TempTileService : TileService() {
             settings = settings.copy(alertEnabled = enabled)
         }
 
-        // Ignore readings older than the staleness window rather than pinning an outdated value.
+        // With monitoring off no fresh readings arrive, so the last one is stale by definition:
+        // drop it immediately rather than letting it linger until the freshness window expires.
+        // Also ignore readings older than the staleness window rather than pinning an outdated value.
         val reading = container.readings.latest.value
-            ?.takeIf { System.currentTimeMillis() - it.timestampMillis <= FRESH_MILLIS }
+            ?.takeIf { settings.monitoringEnabled && System.currentTimeMillis() - it.timestampMillis <= FRESH_MILLIS }
 
         return TileBuilders.Tile.Builder()
             .setResourcesVersion(RESOURCES_VERSION)
