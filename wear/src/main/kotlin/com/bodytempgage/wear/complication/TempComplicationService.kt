@@ -38,8 +38,10 @@ class TempComplicationService : SuspendingComplicationDataSourceService() {
     override suspend fun onComplicationRequest(request: ComplicationRequest): ComplicationData? {
         val container = WearApp.container(this)
         val settings = container.settings.flow.first()
+        // With monitoring off no fresh readings arrive, so the last one is stale by definition:
+        // drop it immediately rather than showing an outdated temperature on the watch face.
         val reading = container.readings.latest.value
-            ?.takeIf { System.currentTimeMillis() - it.timestampMillis <= FRESH_MILLIS }
+            ?.takeIf { settings.monitoringEnabled && System.currentTimeMillis() - it.timestampMillis <= FRESH_MILLIS }
         val bodyC = reading?.bodyTempC
 
         return when (request.complicationType) {
