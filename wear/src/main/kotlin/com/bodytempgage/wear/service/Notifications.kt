@@ -20,6 +20,7 @@ object Notifications {
     const val ALERT_NOTIFICATION_ID = 2
     const val WARNING_NOTIFICATION_ID = 3
     const val PAUSED_NOTIFICATION_ID = 4
+    const val BATTERY_NOTIFICATION_ID = 5
 
     fun createChannels(context: Context) {
         val manager = context.getSystemService(NotificationManager::class.java)
@@ -83,6 +84,18 @@ object Notifications {
             .setContentText(context.getString(R.string.notif_paused_text, minutes))
             .setContentIntent(contentIntent(context))
             .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setCategory(NotificationCompat.CATEGORY_STATUS)
+            .setAutoCancel(true)
+            .build()
+
+    /** Shown once when the gauge battery drops below the low threshold. */
+    fun batteryNotification(context: Context, batteryPercent: Int): android.app.Notification =
+        NotificationCompat.Builder(context, CHANNEL_WARNINGS)
+            .setSmallIcon(R.drawable.ic_stat_thermometer)
+            .setContentTitle(context.getString(R.string.notif_battery_title))
+            .setContentText(context.getString(R.string.notif_battery_text, batteryPercent))
+            .setContentIntent(contentIntent(context))
+            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .setCategory(NotificationCompat.CATEGORY_STATUS)
             .setAutoCancel(true)
             .build()
