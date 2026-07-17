@@ -67,7 +67,7 @@
     <string name="notif_warn_low_title">Пониженная температура</string>
     <string name="notif_temp_text">Температура тела %1$s</string>
     <string name="notif_battery_title">Батарея термометра разряжается</string>
-    <string name="notif_battery_text">Заряд %1$d%% — скоро потребуется замена</string>
+    <string name="notif_battery_text">Заряд %1$d%% — скоро потребуется подзарядка</string>
 
     <!-- Chart -->
     <string name="chart_title">История</string>
