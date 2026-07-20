@@ -2,9 +2,13 @@ package com.bodytempgage.common.data
 
 import com.bodytempgage.core.GaugeReading
 import com.bodytempgage.core.MeawowPredictor
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 
 /** A thermometer seen during scanning. */
 data class DiscoveredGauge(
@@ -26,8 +30,15 @@ data class TempSample(
 /**
  * In-memory hub for decoded advertisements. Fed by [com.bodytempgage.common.ble.BleEngine],
  * observed by both the UI and the foreground monitor service.
+ *
+ * With a [historyStore] and [scope] the temperature history additionally persists to disk:
+ * loaded once at construction and appended on every recorded sample, so the chart survives
+ * process restarts.
  */
-class ReadingRepository {
+class ReadingRepository(
+    private val historyStore: HistoryStore? = null,
+    private val scope: CoroutineScope? = null,
+) {
 
     /** MAC of the device the user picked; null means "accept the first thermometer seen". */
     @Volatile
@@ -60,6 +71,22 @@ class ReadingRepository {
     /** Rolling temperature history of the selected device, oldest first. */
     private val _history = MutableStateFlow<List<TempSample>>(emptyList())
     val history: StateFlow<List<TempSample>> = _history.asStateFlow()
+
+    init {
+        if (historyStore != null && scope != null) {
+            scope.launch(Dispatchers.IO) {
+                val loaded = historyStore.load(System.currentTimeMillis(), HISTORY_WINDOW_MILLIS)
+                if (loaded.isNotEmpty()) {
+                    // Samples may already be arriving; keep them and prepend the older
+                    // persisted ones so the list stays sorted oldest-first.
+                    _history.update { current ->
+                        val firstLive = current.firstOrNull()?.timestampMillis ?: Long.MAX_VALUE
+                        loaded.filter { it.timestampMillis < firstLive } + current
+                    }
+                }
+            }
+        }
+    }
 
     fun report(mac: String, name: String?, rssi: Int, reading: GaugeReading) {
         val resolvedName = name ?: _devices.value[mac]?.name
@@ -101,6 +128,9 @@ class ReadingRepository {
         _latestRssi.value = null
         _latestMeawow.value = null
         _history.value = emptyList()
+        if (historyStore != null) {
+            scope?.launch(Dispatchers.IO) { historyStore.clear() }
+        }
     }
 
     /** The Meawow app uses a lighter gradient weight for the MMC-T201-2 model. */
@@ -116,8 +146,11 @@ class ReadingRepository {
         val last = samples.lastOrNull()
         if (last != null && timestampMillis - last.timestampMillis < MIN_SAMPLE_INTERVAL_MILLIS) return
         val cutoff = timestampMillis - HISTORY_WINDOW_MILLIS
-        _history.value = samples.dropWhile { it.timestampMillis < cutoff } +
-            TempSample(timestampMillis, bodyTempC, gaugeTempC)
+        val sample = TempSample(timestampMillis, bodyTempC, gaugeTempC)
+        _history.update { it.dropWhile { s -> s.timestampMillis < cutoff } + sample }
+        if (historyStore != null) {
+            scope?.launch(Dispatchers.IO) { historyStore.append(sample, _history.value) }
+        }
     }
 
     private companion object {

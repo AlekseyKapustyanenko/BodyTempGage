@@ -4,6 +4,7 @@ import android.app.Application
 import android.bluetooth.le.ScanSettings
 import android.content.Context
 import com.bodytempgage.common.ble.BleEngine
+import com.bodytempgage.common.data.HistoryStore
 import com.bodytempgage.common.data.ReadingRepository
 import com.bodytempgage.common.data.SettingsRepository
 import com.bodytempgage.common.sync.SettingsSync
@@ -20,8 +21,10 @@ import kotlinx.coroutines.launch
  * the gauge from BLE advertisements only.
  */
 class WearContainer(context: Context) {
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+
     val settings = SettingsRepository(context)
-    val readings = ReadingRepository()
+    val readings = ReadingRepository(HistoryStore(context), scope)
 
     // BALANCED even while the UI is open: scan callbacks arrive on the main looper, and
     // LOW_LATENCY floods the watch's UI thread enough to make scrolling stutter.
@@ -29,8 +32,6 @@ class WearContainer(context: Context) {
 
     /** Mirrors settings changes to/from the paired phone over the Data Layer. */
     val settingsSync = SettingsSync(context, settings)
-
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     init {
         scope.launch {

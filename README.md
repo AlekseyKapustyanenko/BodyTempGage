@@ -69,6 +69,24 @@ Requirements: JDK 17+, Android SDK (compileSdk 35). Open in Android Studio, or:
 In environments without the Android SDK / access to `dl.google.com`, set `SKIP_ANDROID=1`
 to work with `:core` alone (`SKIP_ANDROID=1 ./gradlew :core:test`).
 
+### Release / Play Store builds
+
+```
+scripts/build-release.sh          # release APKs (adb-installable)
+scripts/build-release.sh bundle   # .aab bundles for Play Console upload
+```
+
+Release builds are minified (R8). With a `keystore.properties` in the repo root (copy
+`keystore.properties.example` and point it at your upload keystore) they are signed with
+the real upload key; without it they fall back to the debug key, which is fine for
+sideloading but not for Play. Both apps must share one key — the Wearable Data Layer
+only pairs identically-signed packages. The wear module uses version codes 100000+ so
+both bundles can live in one Play listing.
+
+The privacy policy served to users lives in [`docs/privacy-policy.md`](docs/privacy-policy.md)
+([русская версия](docs/privacy-policy.ru.md)) — publish `docs/` with GitHub Pages so the
+in-app link and the Play listing can point at it.
+
 ## Usage
 
 1. Grant the Bluetooth permission on first launch.

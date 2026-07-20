@@ -1,7 +1,11 @@
 #!/bin/bash
-# Build installable (debug-signed) release APKs for the apps.
-#   Usage: scripts/build-release.sh [app|wear|all]   (default: all)
+# Build installable release APKs, or Play-uploadable AABs with "bundle".
+#   Usage: scripts/build-release.sh [app|wear|all|bundle]   (default: all)
 # Gradle is incremental, so building "all" is cheap when only one module changed.
+#
+# Signing: with a keystore.properties in the repo root (see keystore.properties.example)
+# release artifacts are signed with the real upload key; without it they are debug-signed
+# (adb-installable, NOT uploadable to Play).
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
@@ -14,15 +18,17 @@ export ANDROID_SDK_ROOT="${ANDROID_SDK_ROOT:-$ANDROID_HOME}"
 GRADLE="${GRADLE:-gradle}"
 
 case "${1:-all}" in
-  app)  tasks=(":app:assembleRelease") ;;
-  wear) tasks=(":wear:assembleRelease") ;;
-  all)  tasks=(":app:assembleRelease" ":wear:assembleRelease") ;;
-  *) echo "usage: $0 [app|wear|all]" >&2; exit 2 ;;
+  app)    tasks=(":app:assembleRelease") ;;
+  wear)   tasks=(":wear:assembleRelease") ;;
+  all)    tasks=(":app:assembleRelease" ":wear:assembleRelease") ;;
+  bundle) tasks=(":app:bundleRelease" ":wear:bundleRelease") ;;
+  *) echo "usage: $0 [app|wear|all|bundle]" >&2; exit 2 ;;
 esac
 
 "$GRADLE" "${tasks[@]}" --console=plain
 
 echo
-echo "Release APKs:"
+echo "Release artifacts:"
 find app/build/outputs/apk/release wear/build/outputs/apk/release \
-  -name '*.apk' 2>/dev/null -print
+  app/build/outputs/bundle/release wear/build/outputs/bundle/release \
+  \( -name '*.apk' -o -name '*.aab' \) 2>/dev/null -print

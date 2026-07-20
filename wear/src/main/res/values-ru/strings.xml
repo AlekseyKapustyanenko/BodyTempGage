@@ -43,6 +43,8 @@
     <string name="decrease">Уменьшить</string>
     <string name="increase">Увеличить</string>
 
+    <string name="about_disclaimer">Не медицинское изделие. Температура тела — расчётная оценка, не используйте её для медицинских решений.</string>
+
     <!-- Permissions -->
     <string name="permissions_title">Нужно разрешение Bluetooth</string>
     <string name="permissions_text">Часы ищут термометр через Bluetooth LE.</string>

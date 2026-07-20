@@ -3,6 +3,7 @@ package com.bodytempgage.app
 import android.app.Application
 import android.content.Context
 import com.bodytempgage.common.ble.BleEngine
+import com.bodytempgage.common.data.HistoryStore
 import com.bodytempgage.common.data.ReadingRepository
 import com.bodytempgage.common.data.SettingsRepository
 import com.bodytempgage.common.sync.SettingsSync
@@ -13,14 +14,14 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 
 class AppContainer(context: Context) {
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+
     val settings = SettingsRepository(context)
-    val readings = ReadingRepository()
+    val readings = ReadingRepository(HistoryStore(context), scope)
     val bleEngine = BleEngine(context, readings)
 
     /** Mirrors settings changes to/from the paired Wear OS watch over the Data Layer. */
     val settingsSync = SettingsSync(context, settings)
-
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     init {
         scope.launch {

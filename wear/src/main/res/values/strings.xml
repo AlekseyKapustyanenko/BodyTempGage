@@ -43,6 +43,8 @@
     <string name="decrease">Decrease</string>
     <string name="increase">Increase</string>
 
+    <string name="about_disclaimer">Not a medical device. The body temperature is an estimate — do not use it for medical decisions.</string>
+
     <!-- Permissions -->
     <string name="permissions_title">Bluetooth permission needed</string>
     <string name="permissions_text">The watch scans for your thermometer over Bluetooth LE.</string>
