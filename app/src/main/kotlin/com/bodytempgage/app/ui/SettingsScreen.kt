@@ -218,10 +218,6 @@ fun SettingsScreen(
     }
 }
 
-/** Published from docs/privacy-policy.md via GitHub Pages. */
-private const val PRIVACY_POLICY_URL =
-    "https://alekseykapustyanenko.github.io/BodyTempGage/privacy-policy.html"
-
 /** One 0.1 °C step within [min]..[max], rounded so repeated steps don't drift. */
 private fun stepThreshold(current: Double, delta: Double, min: Double, max: Double): Double =
     kotlin.math.round((current + delta).coerceIn(min, max) * 10) / 10.0

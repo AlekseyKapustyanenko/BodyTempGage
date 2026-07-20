@@ -74,7 +74,11 @@ class TempTileService : TileService() {
 
         // Tapping the Start/Stop button re-issues a tile request tagged with its clickable id.
         // Flip monitoring, start/stop the scanning service, and render the new state right away.
-        if (requestParams.currentState.lastClickableId == CLICK_TOGGLE_MONITOR) {
+        // Before first-run consent the toggles are inert: the tile must not start a BLE scan
+        // that the user hasn't agreed to in the app yet.
+        if (requestParams.currentState.lastClickableId == CLICK_TOGGLE_MONITOR &&
+            settings.consentAccepted
+        ) {
             val enabled = !settings.monitoringEnabled
             container.settings.setMonitoringEnabled(enabled)
             if (enabled) MonitorService.start(this) else MonitorService.stop(this)
@@ -83,7 +87,9 @@ class TempTileService : TileService() {
 
         // Tapping the alerts button flips whether threshold crossings raise notifications,
         // without touching the background scan. Same reload-on-tap mechanism as the monitor toggle.
-        if (requestParams.currentState.lastClickableId == CLICK_TOGGLE_ALERT) {
+        if (requestParams.currentState.lastClickableId == CLICK_TOGGLE_ALERT &&
+            settings.consentAccepted
+        ) {
             val enabled = !settings.alertEnabled
             container.settings.setAlertEnabled(enabled)
             settings = settings.copy(alertEnabled = enabled)

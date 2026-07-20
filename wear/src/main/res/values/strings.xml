@@ -45,6 +45,15 @@
 
     <string name="about_disclaimer">Not a medical device. The body temperature is an estimate — do not use it for medical decisions.</string>
 
+    <!-- First-run consent -->
+    <string name="consent_title">Before you start</string>
+    <string name="consent_about_text">Reads Xiaomi MMC-T201 thermometers over Bluetooth LE. Body temperature is estimated from the two on-device sensors.</string>
+    <string name="consent_privacy_text">All data stays on your devices. Full privacy policy:\nalekseykapustyanenko.github.io/BodyTempGage/privacy-policy.html</string>
+    <string name="consent_about_check">I\'ve read the app info</string>
+    <string name="consent_disclaimer_check">I agree with the disclaimer</string>
+    <string name="consent_privacy_check">I agree with the privacy policy</string>
+    <string name="consent_continue">Continue</string>
+
     <!-- Permissions -->
     <string name="permissions_title">Bluetooth permission needed</string>
     <string name="permissions_text">The watch scans for your thermometer over Bluetooth LE.</string>

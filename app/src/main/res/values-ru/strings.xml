@@ -41,10 +41,18 @@
     <string name="alert_threshold_low">Тревога: низкая</string>
     <string name="change_device">Сменить устройство</string>
     <string name="about_title">О приложении</string>
-    <string name="about_text">Считывает показания термометров Xiaomi Miaomiaoce MMC-T201 через Bluetooth LE без сопряжения. Температура тела рассчитывается по двум встроенным датчикам по алгоритму официального приложения Meawow.</string>
+    <string name="about_text">Считывает показания термометров Xiaomi Miaomiaoce MMC-T201 через Bluetooth LE без сопряжения. Температура тела рассчитывается по двум встроенным датчикам.</string>
     <string name="disclaimer_title">Отказ от ответственности</string>
     <string name="disclaimer_text">BodyTempGage не является медицинским изделием и не предназначено для диагностики или лечения. Отображаемая температура тела — расчётная оценка по двум датчикам термометра, она может отличаться от показаний клинического термометра. Не принимайте медицинские решения на её основе — при сомнениях обратитесь к врачу.</string>
     <string name="privacy_policy">Политика конфиденциальности</string>
+
+    <!-- First-run consent -->
+    <string name="consent_title">Перед началом работы</string>
+    <string name="consent_read_policy">Читать политику</string>
+    <string name="consent_about_check">Я ознакомлен(а) с информацией о приложении</string>
+    <string name="consent_disclaimer_check">Я согласен(на) с отказом от ответственности</string>
+    <string name="consent_privacy_check">Я согласен(на) с политикой конфиденциальности</string>
+    <string name="consent_continue">Продолжить</string>
 
     <!-- Permissions -->
     <string name="permissions_title">Нужно разрешение Bluetooth</string>

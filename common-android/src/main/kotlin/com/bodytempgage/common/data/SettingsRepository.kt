@@ -41,6 +41,11 @@ data class AppSettings(
      * turns the auto-disable off. Device-local, like [monitoringEnabled].
      */
     val autoDisableMinutes: Int = DEFAULT_AUTO_DISABLE_MINUTES,
+    /**
+     * The user ticked all first-run consent boxes (app info, disclaimer, privacy policy).
+     * Device-local by design: each device shows its own consent screen once.
+     */
+    val consentAccepted: Boolean = false,
 ) {
     val thresholds: AlertThresholds
         get() = AlertThresholds(
@@ -71,6 +76,7 @@ class SettingsRepository(private val context: Context) {
         val alertLowC = doublePreferencesKey("alert_low_c")
         val monitoringEnabled = booleanPreferencesKey("monitoring_enabled")
         val autoDisableMinutes = intPreferencesKey("auto_disable_minutes")
+        val consentAccepted = booleanPreferencesKey("consent_accepted")
     }
 
     val flow: Flow<AppSettings> = context.dataStore.data.map { p ->
@@ -88,6 +94,7 @@ class SettingsRepository(private val context: Context) {
             alertLowC = p[Keys.alertLowC] ?: 35.0,
             monitoringEnabled = p[Keys.monitoringEnabled] ?: true,
             autoDisableMinutes = p[Keys.autoDisableMinutes] ?: AppSettings.DEFAULT_AUTO_DISABLE_MINUTES,
+            consentAccepted = p[Keys.consentAccepted] ?: false,
         )
     }
 
@@ -139,6 +146,10 @@ class SettingsRepository(private val context: Context) {
 
     suspend fun setMonitoringEnabled(value: Boolean) {
         context.dataStore.edit { it[Keys.monitoringEnabled] = value }
+    }
+
+    suspend fun setConsentAccepted(value: Boolean) {
+        context.dataStore.edit { it[Keys.consentAccepted] = value }
     }
 
     /**

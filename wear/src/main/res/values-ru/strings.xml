@@ -45,6 +45,15 @@
 
     <string name="about_disclaimer">Не медицинское изделие. Температура тела — расчётная оценка, не используйте её для медицинских решений.</string>
 
+    <!-- First-run consent -->
+    <string name="consent_title">Перед началом</string>
+    <string name="consent_about_text">Считывает термометры Xiaomi MMC-T201 через Bluetooth LE. Температура тела рассчитывается по двум встроенным датчикам.</string>
+    <string name="consent_privacy_text">Все данные остаются на ваших устройствах. Полная политика конфиденциальности:\nalekseykapustyanenko.github.io/BodyTempGage/privacy-policy.html</string>
+    <string name="consent_about_check">Ознакомлен с информацией</string>
+    <string name="consent_disclaimer_check">Согласен с дисклеймером</string>
+    <string name="consent_privacy_check">Согласен с политикой</string>
+    <string name="consent_continue">Продолжить</string>
+
     <!-- Permissions -->
     <string name="permissions_title">Нужно разрешение Bluetooth</string>
     <string name="permissions_text">Часы ищут термометр через Bluetooth LE.</string>
