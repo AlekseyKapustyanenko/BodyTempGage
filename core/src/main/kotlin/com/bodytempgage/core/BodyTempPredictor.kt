@@ -1,8 +1,7 @@
 package com.bodytempgage.core
 
 /**
- * Port of the core-temperature predictor from the official Meawow app
- * (`com.miaomiaoce.mmc.owl`, `MMC_Algorithm_xp.predict_v2`) for the MMC-T201 thermometer.
+ * Core-temperature predictor for the MMC-T201 dual-sensor thermometer.
  *
  * The estimate is a second-order polynomial in the skin temperature plus a correction
  * proportional to the skin-to-ambient gradient (a proxy for heat-loss rate):
@@ -18,7 +17,7 @@ package com.bodytempgage.core
  * The predictor is stateful (peak-hold tracker, prediction gate with hysteresis, slew
  * limiter), so keep one instance per reading stream and [reset] it when the stream changes.
  */
-class MeawowPredictor {
+class BodyTempPredictor {
 
     /** The five model coefficients. */
     data class Params(
@@ -29,7 +28,7 @@ class MeawowPredictor {
         val offset: Double,
     ) {
         companion object {
-            /** Hardcoded coefficients the Meawow app uses for the MMC-T201(-1). */
+            /** Model coefficients for the MMC-T201(-1). */
             val T201 = Params(a = 110.98, b = -4.864, c = 0.07764, d = 0.90594, offset = 0.0)
 
             /** Default coefficients for the MMC-T201-2 (gradient weighted about half as much). */
@@ -54,7 +53,7 @@ class MeawowPredictor {
     }
 
     /**
-     * Feed one sample and get the temperature the Meawow app would display, °C.
+     * Feed one sample and get the displayed temperature, °C.
      *
      * @param skinTempC       inner (skin-side) sensor temperature
      * @param outerTempC      outer (ambient-side) sensor temperature

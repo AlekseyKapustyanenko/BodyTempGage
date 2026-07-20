@@ -26,7 +26,7 @@ class T201DecoderTest {
         assertEquals(34.28, reading.ambientTempC, 1e-9)
         assertEquals(81, reading.batteryPercent)
         assertEquals(42L, reading.timestampMillis)
-        // The decoder only extracts raw sensors; MeawowPredictor fills the body estimate.
+        // The decoder only extracts raw sensors; BodyTempPredictor fills the body estimate.
         assertNull(reading.bodyTempC)
     }
 

@@ -1,7 +1,7 @@
 package com.bodytempgage.common.data
 
 import com.bodytempgage.core.GaugeReading
-import com.bodytempgage.core.MeawowPredictor
+import com.bodytempgage.core.BodyTempPredictor
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -51,19 +51,19 @@ class ReadingRepository(
     val latestRssi: StateFlow<Int?> = _latestRssi.asStateFlow()
 
     /**
-     * Raw output of the Meawow algorithm for the latest reading of the selected device, °C.
+     * Raw predictor output for the latest reading of the selected device, °C.
      * Unlike [GaugeReading.bodyTempC] (null while off the body) this always carries the
      * value the algorithm produced — the skin temperature when it is not predicting.
      */
-    private val _latestMeawow = MutableStateFlow<Double?>(null)
-    val latestMeawow: StateFlow<Double?> = _latestMeawow.asStateFlow()
+    private val _latestPredicted = MutableStateFlow<Double?>(null)
+    val latestPredicted: StateFlow<Double?> = _latestPredicted.asStateFlow()
 
     /**
      * One predictor per gauge, keyed by MAC: the predictor is stateful (peak-hold, gate,
      * slew limit) and its state belongs to the physical reading stream, so it survives
      * device switching and also serves the picker previews.
      */
-    private val predictors = mutableMapOf<String, MeawowPredictor>()
+    private val predictors = mutableMapOf<String, BodyTempPredictor>()
 
     private val _devices = MutableStateFlow<Map<String, DiscoveredGauge>>(emptyMap())
     val devices: StateFlow<Map<String, DiscoveredGauge>> = _devices.asStateFlow()
@@ -91,17 +91,17 @@ class ReadingRepository(
     fun report(mac: String, name: String?, rssi: Int, reading: GaugeReading) {
         val resolvedName = name ?: _devices.value[mac]?.name
 
-        val predictor = predictors.getOrPut(mac.uppercase()) { MeawowPredictor() }
-        val meawowTempC = predictor.predict(
+        val predictor = predictors.getOrPut(mac.uppercase()) { BodyTempPredictor() }
+        val predictedTempC = predictor.predict(
             skinTempC = reading.gaugeTempC,
             outerTempC = reading.ambientTempC,
             timestampMillis = reading.timestampMillis,
-            params = meawowParams(resolvedName),
+            params = predictorParams(resolvedName),
         )
         // Below the algorithm's engage threshold the gauge is off the body and the
         // predictor just echoes the skin temperature — not a body estimate.
         val enriched = reading.copy(
-            bodyTempC = if (predictor.isPredicting) meawowTempC else null,
+            bodyTempC = if (predictor.isPredicting) predictedTempC else null,
         )
 
         _devices.value = _devices.value + (
@@ -117,7 +117,7 @@ class ReadingRepository(
         if (selected == null || selected.equals(mac, ignoreCase = true)) {
             _latest.value = enriched
             _latestRssi.value = rssi
-            _latestMeawow.value = meawowTempC
+            _latestPredicted.value = predictedTempC
             recordSample(reading.timestampMillis, enriched.bodyTempC, reading.gaugeTempC)
         }
     }
@@ -126,19 +126,19 @@ class ReadingRepository(
     fun resetLatest() {
         _latest.value = null
         _latestRssi.value = null
-        _latestMeawow.value = null
+        _latestPredicted.value = null
         _history.value = emptyList()
         if (historyStore != null) {
             scope?.launch(Dispatchers.IO) { historyStore.clear() }
         }
     }
 
-    /** The Meawow app uses a lighter gradient weight for the MMC-T201-2 model. */
-    private fun meawowParams(name: String?): MeawowPredictor.Params =
+    /** The MMC-T201-2 model needs a lighter gradient weight than the T201(-1). */
+    private fun predictorParams(name: String?): BodyTempPredictor.Params =
         if (name?.contains("T201-2") == true) {
-            MeawowPredictor.Params.T201_2
+            BodyTempPredictor.Params.T201_2
         } else {
-            MeawowPredictor.Params.T201
+            BodyTempPredictor.Params.T201
         }
 
     private fun recordSample(timestampMillis: Long, bodyTempC: Double?, gaugeTempC: Double?) {
