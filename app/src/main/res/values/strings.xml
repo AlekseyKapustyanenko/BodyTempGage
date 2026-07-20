@@ -77,6 +77,8 @@
     <string name="notif_warn_high_title">Elevated temperature</string>
     <string name="notif_warn_low_title">Lowered temperature</string>
     <string name="notif_temp_text">Body temperature is %1$s</string>
+    <string name="notif_not_worn_title">Gauge is off the body</string>
+    <string name="notif_not_worn_text">Body temperature is no longer being measured — reattach the gauge</string>
     <string name="notif_battery_title">Thermometer battery low</string>
     <string name="notif_battery_text">Battery is at %1$d%% — recharge it soon</string>
 

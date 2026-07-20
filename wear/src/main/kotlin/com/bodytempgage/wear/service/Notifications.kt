@@ -21,6 +21,7 @@ object Notifications {
     const val WARNING_NOTIFICATION_ID = 3
     const val PAUSED_NOTIFICATION_ID = 4
     const val BATTERY_NOTIFICATION_ID = 5
+    const val NOT_WORN_NOTIFICATION_ID = 6
 
     fun createChannels(context: Context) {
         val manager = context.getSystemService(NotificationManager::class.java)
@@ -84,6 +85,18 @@ object Notifications {
             .setContentText(context.getString(R.string.notif_paused_text, minutes))
             .setContentIntent(contentIntent(context))
             .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setCategory(NotificationCompat.CATEGORY_STATUS)
+            .setAutoCancel(true)
+            .build()
+
+    /** Shown once when a worn gauge stops producing a body estimate (came off the skin). */
+    fun notWornNotification(context: Context): android.app.Notification =
+        NotificationCompat.Builder(context, CHANNEL_WARNINGS)
+            .setSmallIcon(R.drawable.ic_stat_thermometer)
+            .setContentTitle(context.getString(R.string.notif_not_worn_title))
+            .setContentText(context.getString(R.string.notif_not_worn_text))
+            .setContentIntent(contentIntent(context))
+            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .setCategory(NotificationCompat.CATEGORY_STATUS)
             .setAutoCancel(true)
             .build()
