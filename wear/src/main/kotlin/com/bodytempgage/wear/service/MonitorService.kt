@@ -14,6 +14,7 @@ import androidx.wear.watchface.complications.datasource.ComplicationDataSourceUp
 import com.bodytempgage.common.TempFormat
 import com.bodytempgage.common.ble.BleEngine
 import com.bodytempgage.common.data.AppSettings
+import com.bodytempgage.core.OffBodyMonitor
 import com.bodytempgage.core.TempEvent
 import com.bodytempgage.core.ThresholdMonitor
 import com.bodytempgage.wear.R
@@ -44,6 +45,9 @@ class MonitorService : LifecycleService() {
 
     /** Notify about a low gauge battery once per discharge, re-armed on recovery. */
     private var lowBatteryNotified = false
+
+    /** Notify once per wear session when the gauge comes off the skin. */
+    private val offBodyMonitor = OffBodyMonitor()
 
     override fun onCreate() {
         super.onCreate()
@@ -105,6 +109,7 @@ class MonitorService : LifecycleService() {
                         checkThresholds(manager, bodyTempC, settings)
                     }
                     checkBattery(manager, reading.batteryPercent)
+                    checkOffBody(manager, bodyTempC != null, reading.timestampMillis)
                 }
         }
 
@@ -177,6 +182,19 @@ class MonitorService : LifecycleService() {
             TempEvent.LOW_WARNING -> manager.notify(
                 Notifications.WARNING_NOTIFICATION_ID,
                 Notifications.warningNotification(this, getString(R.string.notif_warn_low_title), tempText),
+            )
+        }
+    }
+
+    private fun checkOffBody(
+        manager: NotificationManager,
+        hasBodyEstimate: Boolean,
+        timestampMillis: Long,
+    ) {
+        if (offBodyMonitor.check(hasBodyEstimate, timestampMillis)) {
+            manager.notify(
+                Notifications.NOT_WORN_NOTIFICATION_ID,
+                Notifications.notWornNotification(this),
             )
         }
     }
