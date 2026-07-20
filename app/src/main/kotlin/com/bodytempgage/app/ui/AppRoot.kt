@@ -51,6 +51,16 @@ fun AppRoot(container: AppContainer) {
         container.bleEngine.refresh()
     }
 
+    // Wait for the first DataStore emission so the device picker doesn't flash on launch.
+    val settings = settingsOrNull ?: return
+
+    // First-run consent comes before anything else — no permission prompt and no BLE scan
+    // until the user has ticked all three boxes.
+    if (!settings.consentAccepted) {
+        ConsentScreen(onAccepted = { scope.launch { container.settings.setConsentAccepted(true) } })
+        return
+    }
+
     // Scan while the UI is visible.
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
@@ -69,9 +79,6 @@ fun AppRoot(container: AppContainer) {
         PermissionScreen(onRequest = { permissionLauncher.launch(BleEngine.scanPermissions()) })
         return
     }
-
-    // Wait for the first DataStore emission so the device picker doesn't flash on launch.
-    val settings = settingsOrNull ?: return
 
     var screen by rememberSaveable { mutableStateOf(Screen.Main) }
     val effectiveScreen = if (settings.selectedMac == null && screen == Screen.Main) {

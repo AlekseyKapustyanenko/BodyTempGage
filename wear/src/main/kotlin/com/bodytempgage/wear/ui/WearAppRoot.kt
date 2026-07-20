@@ -16,6 +16,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -42,6 +43,7 @@ import com.bodytempgage.wear.service.MonitorService
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 
 private object Routes {
     const val MAIN = "main"
@@ -52,6 +54,26 @@ private object Routes {
 @Composable
 fun WearAppRoot(container: WearContainer) {
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+
+    // First-run consent comes before anything else — no permission prompt, no BLE scan and
+    // no monitoring service until the user has ticked all three boxes. Observed live (not via
+    // initialSettings below, which deliberately never updates) so accepting proceeds at once;
+    // null until the first DataStore emission to avoid flashing the consent screen.
+    val consentAccepted by container.settings.flow
+        .map { it.consentAccepted }
+        .distinctUntilChanged()
+        .collectAsStateWithLifecycle(initialValue = null as Boolean?)
+    when (consentAccepted) {
+        null -> return
+        false -> {
+            ConsentScreen(
+                onAccepted = { scope.launch { container.settings.setConsentAccepted(true) } },
+            )
+            return
+        }
+        true -> Unit
+    }
 
     var permissionsGranted by remember { mutableStateOf(BleEngine.hasScanPermission(context)) }
     val permissionLauncher = rememberLauncherForActivityResult(

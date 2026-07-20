@@ -41,7 +41,18 @@
     <string name="alert_threshold_low">Low alert</string>
     <string name="change_device">Change device</string>
     <string name="about_title">About</string>
-    <string name="about_text">Reads Xiaomi Miaomiaoce MMC-T201 thermometers over Bluetooth LE advertisements — no pairing needed. Body temperature is estimated from the two on-device sensors using the algorithm of the official Meawow app.</string>
+    <string name="about_text">Reads Xiaomi Miaomiaoce MMC-T201 thermometers over Bluetooth LE advertisements — no pairing needed. Body temperature is estimated from the two on-device sensors.</string>
+    <string name="disclaimer_title">Disclaimer</string>
+    <string name="disclaimer_text">BodyTempGage is not a medical device and is not intended for diagnosis or treatment. The displayed body temperature is an estimate computed from the gauge\'s two sensors and may differ from a clinical thermometer. Do not base medical decisions on it — consult a doctor if in doubt.</string>
+    <string name="privacy_policy">Privacy policy</string>
+
+    <!-- First-run consent -->
+    <string name="consent_title">Before you start</string>
+    <string name="consent_read_policy">Read the policy</string>
+    <string name="consent_about_check">I have read the app information</string>
+    <string name="consent_disclaimer_check">I agree with the disclaimer</string>
+    <string name="consent_privacy_check">I agree with the privacy policy</string>
+    <string name="consent_continue">Continue</string>
 
     <!-- Permissions -->
     <string name="permissions_title">Bluetooth permission needed</string>

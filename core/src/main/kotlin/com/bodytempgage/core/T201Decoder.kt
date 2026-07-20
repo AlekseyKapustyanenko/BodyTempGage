@@ -5,10 +5,10 @@ package com.bodytempgage.core
  *
  * The device broadcasts MiBeacon object 0x2000 with two raw thermistor readings
  * (skin side and environment side) plus a battery byte. Body temperature is not
- * transmitted; it is estimated from both sensors by [MeawowPredictor] — the official
- * Meawow app's algorithm. The predictor is stateful (it tracks each reading stream over
- * time), so it runs where the streams live, not here: the decoder only extracts the raw
- * sensor values and leaves [GaugeReading.bodyTempC] null.
+ * transmitted; it is estimated from both sensors by [BodyTempPredictor]. The predictor
+ * is stateful (it tracks each reading stream over time), so it runs where the streams
+ * live, not here: the decoder only extracts the raw sensor values and leaves
+ * [GaugeReading.bodyTempC] null.
  */
 object T201Decoder {
 

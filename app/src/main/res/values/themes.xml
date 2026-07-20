@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Window theme only: Compose draws all content, AppTheme picks the color scheme.
+         The values-night variant keeps the launch window and system bars dark in dark mode. -->
+    <style name="Theme.BodyTempGage" parent="@android:style/Theme.Material.Light.NoActionBar" />
+</resources>

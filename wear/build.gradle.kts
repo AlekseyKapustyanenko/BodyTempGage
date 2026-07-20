@@ -1,8 +1,18 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
 }
+
+// Release signing comes from an untracked keystore.properties in the repo root
+// (storeFile/storePassword/keyAlias/keyPassword). Without it the release build
+// falls back to the debug key so it stays adb-installable and Data-Layer-pairs
+// with a debug-signed phone build.
+val keystoreProps: Properties? = rootProject.file("keystore.properties")
+    .takeIf { it.exists() }
+    ?.let { file -> Properties().apply { file.inputStream().use(::load) } }
 
 android {
     namespace = "com.bodytempgage.wear"
@@ -14,7 +24,9 @@ android {
         applicationId = "com.bodytempgage"
         minSdk = 30
         targetSdk = 35
-        versionCode = 1
+        // 100000+ keeps wear version codes disjoint from the phone app's, as required
+        // when both bundles share one Play listing.
+        versionCode = 100001
         versionName = "1.0"
 
         ndk {
@@ -24,16 +36,30 @@ android {
         }
     }
 
+    signingConfigs {
+        keystoreProps?.let { props ->
+            create("release") {
+                storeFile = rootProject.file(props.getProperty("storeFile"))
+                storePassword = props.getProperty("storePassword")
+                keyAlias = props.getProperty("keyAlias")
+                keyPassword = props.getProperty("keyPassword")
+            }
+        }
+    }
+
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
             )
-            // Debug-signed so the release APK is adb-installable and Data-Layer-pairs with a
-            // debug-signed phone build. Replace with a real signing config for distribution.
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = if (keystoreProps != null) {
+                signingConfigs.getByName("release")
+            } else {
+                signingConfigs.getByName("debug")
+            }
         }
     }
 

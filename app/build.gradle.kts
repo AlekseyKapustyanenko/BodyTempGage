@@ -1,8 +1,18 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
 }
+
+// Release signing comes from an untracked keystore.properties in the repo root
+// (storeFile/storePassword/keyAlias/keyPassword). Without it the release build
+// falls back to the debug key so it stays adb-installable and Data-Layer-pairs
+// with a debug-signed watch build.
+val keystoreProps: Properties? = rootProject.file("keystore.properties")
+    .takeIf { it.exists() }
+    ?.let { file -> Properties().apply { file.inputStream().use(::load) } }
 
 android {
     namespace = "com.bodytempgage.app"
@@ -12,20 +22,36 @@ android {
         applicationId = "com.bodytempgage"
         minSdk = 26
         targetSdk = 35
+        // The wear module uses 100000+ so both bundles can live in one Play listing
+        // (version codes must be unique across all artifacts of a package).
         versionCode = 1
         versionName = "1.0"
     }
 
+    signingConfigs {
+        keystoreProps?.let { props ->
+            create("release") {
+                storeFile = rootProject.file(props.getProperty("storeFile"))
+                storePassword = props.getProperty("storePassword")
+                keyAlias = props.getProperty("keyAlias")
+                keyPassword = props.getProperty("keyPassword")
+            }
+        }
+    }
+
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
             )
-            // Debug-signed so the release APK is adb-installable and Data-Layer-pairs with the
-            // debug-signed watch build. Replace with a real signing config for distribution.
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = if (keystoreProps != null) {
+                signingConfigs.getByName("release")
+            } else {
+                signingConfigs.getByName("debug")
+            }
         }
     }
 
